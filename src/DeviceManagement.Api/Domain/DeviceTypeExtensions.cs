@@ -1,5 +1,6 @@
 namespace DeviceManagement.Api.Domain;
 
+// Maps enum values to the strings stored in SQL.
 public static class DeviceTypeExtensions
 {
     public static string ToDatabaseValue(this DeviceType deviceType) =>

@@ -1,6 +1,7 @@
 USE DeviceManagementSystem;
 GO
 
+-- MERGE lets us run the seed script again without creating duplicate users.
 ;WITH SeedUsers AS
 (
     SELECT *
@@ -23,6 +24,7 @@ WHEN NOT MATCHED THEN
     VALUES (Source.Name, Source.Role, Source.Location);
 GO
 
+-- Look up the user id from the seeded user name before inserting devices.
 ;WITH SeedDevices AS
 (
     SELECT

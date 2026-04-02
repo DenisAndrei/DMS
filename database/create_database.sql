@@ -1,3 +1,4 @@
+-- Safe to run more than once.
 IF DB_ID(N'DeviceManagementSystem') IS NULL
 BEGIN
     CREATE DATABASE DeviceManagementSystem;
@@ -45,6 +46,7 @@ BEGIN
 END
 GO
 
+-- Keep this index in sync with the duplicate check in the API.
 IF NOT EXISTS
 (
     SELECT 1

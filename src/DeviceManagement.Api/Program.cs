@@ -1,6 +1,9 @@
+using DeviceManagement.Api.Infrastructure.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
 
 var app = builder.Build();
 
