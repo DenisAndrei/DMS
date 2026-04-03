@@ -32,3 +32,5 @@ app.MapGet("/", () => Results.Ok(new
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;
