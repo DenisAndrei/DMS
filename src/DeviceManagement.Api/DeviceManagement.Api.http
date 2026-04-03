@@ -1,6 +1,43 @@
 @DeviceManagement.Api_HostAddress = http://localhost:5145
+@UserId = 1
 
-GET {{DeviceManagement.Api_HostAddress}}/weatherforecast/
+GET {{DeviceManagement.Api_HostAddress}}/
 Accept: application/json
+
+###
+
+GET {{DeviceManagement.Api_HostAddress}}/api/users
+Accept: application/json
+
+###
+
+GET {{DeviceManagement.Api_HostAddress}}/api/users/{{UserId}}
+Accept: application/json
+
+###
+
+POST {{DeviceManagement.Api_HostAddress}}/api/users
+Content-Type: application/json
+
+{
+  "name": "Andrei Marin",
+  "role": "Support Engineer",
+  "location": "Iasi"
+}
+
+###
+
+PUT {{DeviceManagement.Api_HostAddress}}/api/users/{{UserId}}
+Content-Type: application/json
+
+{
+  "name": "Alexandra Ionescu",
+  "role": "Senior QA Engineer",
+  "location": "Bucharest"
+}
+
+###
+
+DELETE {{DeviceManagement.Api_HostAddress}}/api/users/{{UserId}}
 
 ###
