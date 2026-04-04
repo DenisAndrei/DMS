@@ -13,6 +13,108 @@
     </button>
   </header>
 
+  <section class="create-panel">
+    <div class="create-panel__copy">
+      <p class="inventory__eyebrow">Create</p>
+      <h3>Add a new device</h3>
+      <p>
+        Create flow for Phase 2. The form validates required values, checks for obvious duplicates
+        on the client, and still relies on the API for the final duplicate guard.
+      </p>
+    </div>
+
+    <form class="create-form" [formGroup]="createDeviceForm" (ngSubmit)="submitCreateDevice()" novalidate>
+      <div class="create-form__status create-form__status--error" *ngIf="createErrorMessage">
+        <p>{{ createErrorMessage }}</p>
+      </div>
+
+      <div class="create-form__status create-form__status--success" *ngIf="createSuccessMessage">
+        <p>{{ createSuccessMessage }}</p>
+      </div>
+
+      <div class="create-form__grid">
+        <label class="create-form__field">
+          <span>Name</span>
+          <input type="text" formControlName="name" />
+          <small class="create-form__error" *ngIf="shouldShowCreateError('name')">
+            {{ getCreateErrorMessage('name') }}
+          </small>
+        </label>
+
+        <label class="create-form__field">
+          <span>Manufacturer</span>
+          <input type="text" formControlName="manufacturer" />
+          <small class="create-form__error" *ngIf="shouldShowCreateError('manufacturer')">
+            {{ getCreateErrorMessage('manufacturer') }}
+          </small>
+        </label>
+
+        <label class="create-form__field">
+          <span>Type</span>
+          <select formControlName="type">
+            <option *ngFor="let option of deviceTypeOptions" [ngValue]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+
+        <label class="create-form__field">
+          <span>Operating system</span>
+          <input type="text" formControlName="operatingSystem" />
+          <small class="create-form__error" *ngIf="shouldShowCreateError('operatingSystem')">
+            {{ getCreateErrorMessage('operatingSystem') }}
+          </small>
+        </label>
+
+        <label class="create-form__field">
+          <span>OS version</span>
+          <input type="text" formControlName="osVersion" />
+          <small class="create-form__error" *ngIf="shouldShowCreateError('osVersion')">
+            {{ getCreateErrorMessage('osVersion') }}
+          </small>
+        </label>
+
+        <label class="create-form__field">
+          <span>Processor</span>
+          <input type="text" formControlName="processor" />
+          <small class="create-form__error" *ngIf="shouldShowCreateError('processor')">
+            {{ getCreateErrorMessage('processor') }}
+          </small>
+        </label>
+
+        <label class="create-form__field">
+          <span>RAM (GB)</span>
+          <input type="number" min="1" max="1024" formControlName="ramAmountGb" />
+          <small class="create-form__error" *ngIf="shouldShowCreateError('ramAmountGb')">
+            {{ getCreateErrorMessage('ramAmountGb') }}
+          </small>
+        </label>
+
+        <label class="create-form__field">
+          <span>Location</span>
+          <input type="text" formControlName="location" />
+          <small class="create-form__error" *ngIf="shouldShowCreateError('location')">
+            {{ getCreateErrorMessage('location') }}
+          </small>
+        </label>
+
+        <label class="create-form__field create-form__field--full">
+          <span>Description</span>
+          <textarea rows="4" formControlName="description"></textarea>
+          <small class="create-form__error" *ngIf="shouldShowCreateError('description')">
+            {{ getCreateErrorMessage('description') }}
+          </small>
+        </label>
+      </div>
+
+      <div class="create-form__actions">
+        <button class="create-form__button" type="submit" [disabled]="isCreateSubmitting">
+          {{ isCreateSubmitting ? 'Saving device...' : 'Create device' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
   <div class="inventory__status" *ngIf="isLoading">
     <p>Loading devices from the API...</p>
   </div>
@@ -26,57 +128,130 @@
     <p>The API did not return any devices yet.</p>
   </div>
 
-  <div class="inventory__grid" *ngIf="!isLoading && !errorMessage && devices.length > 0">
-    <article class="device-card" *ngFor="let device of devices">
-      <div class="device-card__top">
-        <div>
-          <p class="device-card__type">{{ getDeviceTypeLabel(device.type) }}</p>
-          <h3>{{ device.name }}</h3>
-          <p class="device-card__manufacturer">{{ device.manufacturer }}</p>
+  <div class="inventory__layout" *ngIf="!isLoading && !errorMessage && devices.length > 0">
+    <div class="inventory__grid">
+      <article
+        class="device-card"
+        *ngFor="let device of devices"
+        [class.device-card--selected]="isSelectedDevice(device.id)"
+      >
+        <div class="device-card__top">
+          <div>
+            <p class="device-card__type">{{ getDeviceTypeLabel(device.type) }}</p>
+            <h3>{{ device.name }}</h3>
+            <p class="device-card__manufacturer">{{ device.manufacturer }}</p>
+          </div>
+
+          <span
+            class="device-card__availability"
+            [class.device-card__availability--available]="!device.assignedUser"
+          >
+            {{ device.assignedUser ? 'Assigned' : 'Available' }}
+          </span>
         </div>
 
-        <span
-          class="device-card__availability"
-          [class.device-card__availability--available]="!device.assignedUser"
-        >
-          {{ device.assignedUser ? 'Assigned' : 'Available' }}
-        </span>
+        <dl class="device-card__specs">
+          <div>
+            <dt>OS</dt>
+            <dd>{{ device.operatingSystem }} {{ device.osVersion }}</dd>
+          </div>
+          <div>
+            <dt>Processor</dt>
+            <dd>{{ device.processor }}</dd>
+          </div>
+          <div>
+            <dt>RAM</dt>
+            <dd>{{ device.ramAmountGb }} GB</dd>
+          </div>
+          <div>
+            <dt>Location</dt>
+            <dd>{{ device.location }}</dd>
+          </div>
+        </dl>
+
+        <p class="device-card__description">{{ device.description }}</p>
+
+        <section class="device-card__assignment" *ngIf="device.assignedUser; else availableState">
+          <p class="device-card__assignment-label">Currently used by</p>
+          <h4>{{ device.assignedUser.name }}</h4>
+          <p>{{ device.assignedUser.role }} - {{ device.assignedUser.location }}</p>
+        </section>
+
+        <ng-template #availableState>
+          <section class="device-card__assignment device-card__assignment--available">
+            <p class="device-card__assignment-label">Assignment</p>
+            <h4>Ready to assign</h4>
+            <p>This device is currently not assigned to any user.</p>
+          </section>
+        </ng-template>
+
+        <button class="device-card__button" type="button" (click)="selectDevice(device.id)">
+          {{ isSelectedDevice(device.id) ? 'Showing details' : 'View details' }}
+        </button>
+      </article>
+    </div>
+
+    <aside class="details-panel" aria-label="Selected device details">
+      <div class="details-panel__status" *ngIf="isDetailsLoading">
+        <p>Loading selected device details...</p>
       </div>
 
-      <dl class="device-card__specs">
-        <div>
-          <dt>OS</dt>
-          <dd>{{ device.operatingSystem }} {{ device.osVersion }}</dd>
-        </div>
-        <div>
-          <dt>Processor</dt>
-          <dd>{{ device.processor }}</dd>
-        </div>
-        <div>
-          <dt>RAM</dt>
-          <dd>{{ device.ramAmountGb }} GB</dd>
-        </div>
-        <div>
-          <dt>Location</dt>
-          <dd>{{ device.location }}</dd>
-        </div>
-      </dl>
+      <div
+        class="details-panel__status details-panel__status--error"
+        *ngIf="!isDetailsLoading && detailsErrorMessage"
+      >
+        <p>{{ detailsErrorMessage }}</p>
+      </div>
 
-      <p class="device-card__description">{{ device.description }}</p>
+      <div class="details-panel__content" *ngIf="!isDetailsLoading && !detailsErrorMessage && selectedDevice">
+        <p class="details-panel__eyebrow">{{ getDeviceTypeLabel(selectedDevice.type) }}</p>
+        <h3>{{ selectedDevice.name }}</h3>
+        <p class="details-panel__subtitle">
+          {{ selectedDevice.manufacturer }} - {{ selectedDevice.operatingSystem }}
+          {{ selectedDevice.osVersion }}
+        </p>
+        <p class="details-panel__description">{{ selectedDevice.description }}</p>
 
-      <section class="device-card__assignment" *ngIf="device.assignedUser; else availableState">
-        <p class="device-card__assignment-label">Currently used by</p>
-        <h4>{{ device.assignedUser.name }}</h4>
-        <p>{{ device.assignedUser.role }} · {{ device.assignedUser.location }}</p>
-      </section>
+        <dl class="details-panel__facts">
+          <div>
+            <dt>Processor</dt>
+            <dd>{{ selectedDevice.processor }}</dd>
+          </div>
+          <div>
+            <dt>RAM</dt>
+            <dd>{{ selectedDevice.ramAmountGb }} GB</dd>
+          </div>
+          <div>
+            <dt>Location</dt>
+            <dd>{{ selectedDevice.location }}</dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>{{ selectedDevice.createdAtUtc | date: 'medium' }}</dd>
+          </div>
+          <div>
+            <dt>Updated</dt>
+            <dd>{{ selectedDevice.updatedAtUtc | date: 'medium' }}</dd>
+          </div>
+        </dl>
 
-      <ng-template #availableState>
-        <section class="device-card__assignment device-card__assignment--available">
-          <p class="device-card__assignment-label">Assignment</p>
-          <h4>Ready to assign</h4>
-          <p>This device is currently not assigned to any user.</p>
+        <section
+          class="details-panel__assignment"
+          *ngIf="selectedDevice.assignedUser; else selectedAvailableState"
+        >
+          <p class="details-panel__assignment-label">Assigned to</p>
+          <h4>{{ selectedDevice.assignedUser.name }}</h4>
+          <p>{{ selectedDevice.assignedUser.role }} - {{ selectedDevice.assignedUser.location }}</p>
         </section>
-      </ng-template>
-    </article>
+
+        <ng-template #selectedAvailableState>
+          <section class="details-panel__assignment details-panel__assignment--available">
+            <p class="details-panel__assignment-label">Assignment</p>
+            <h4>Not assigned</h4>
+            <p>This device is currently available.</p>
+          </section>
+        </ng-template>
+      </div>
+    </aside>
   </div>
 </section>
