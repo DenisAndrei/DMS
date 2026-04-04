@@ -251,6 +251,110 @@
             <p>This device is currently available.</p>
           </section>
         </ng-template>
+
+        <section class="details-panel__editor">
+          <div class="details-panel__editor-copy">
+            <p class="details-panel__assignment-label">Edit selected device</p>
+            <p class="details-panel__editor-note">
+              Update the device details here. The current assignment stays unchanged in Phase 2.
+            </p>
+          </div>
+
+          <form class="update-form" [formGroup]="updateDeviceForm" (ngSubmit)="submitUpdateDevice()" novalidate>
+            <div class="update-form__status update-form__status--error" *ngIf="updateErrorMessage">
+              <p>{{ updateErrorMessage }}</p>
+            </div>
+
+            <div class="update-form__status update-form__status--success" *ngIf="updateSuccessMessage">
+              <p>{{ updateSuccessMessage }}</p>
+            </div>
+
+            <div class="update-form__grid">
+              <label class="update-form__field">
+                <span>Name</span>
+                <input type="text" formControlName="name" />
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('name')">
+                  {{ getUpdateErrorMessage('name') }}
+                </small>
+              </label>
+
+              <label class="update-form__field">
+                <span>Manufacturer</span>
+                <input type="text" formControlName="manufacturer" />
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('manufacturer')">
+                  {{ getUpdateErrorMessage('manufacturer') }}
+                </small>
+              </label>
+
+              <label class="update-form__field">
+                <span>Type</span>
+                <select formControlName="type">
+                  <option *ngFor="let option of deviceTypeOptions" [ngValue]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+              </label>
+
+              <label class="update-form__field">
+                <span>Operating system</span>
+                <input type="text" formControlName="operatingSystem" />
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('operatingSystem')">
+                  {{ getUpdateErrorMessage('operatingSystem') }}
+                </small>
+              </label>
+
+              <label class="update-form__field">
+                <span>OS version</span>
+                <input type="text" formControlName="osVersion" />
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('osVersion')">
+                  {{ getUpdateErrorMessage('osVersion') }}
+                </small>
+              </label>
+
+              <label class="update-form__field">
+                <span>Processor</span>
+                <input type="text" formControlName="processor" />
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('processor')">
+                  {{ getUpdateErrorMessage('processor') }}
+                </small>
+              </label>
+
+              <label class="update-form__field">
+                <span>RAM (GB)</span>
+                <input type="number" min="1" max="1024" formControlName="ramAmountGb" />
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('ramAmountGb')">
+                  {{ getUpdateErrorMessage('ramAmountGb') }}
+                </small>
+              </label>
+
+              <label class="update-form__field">
+                <span>Location</span>
+                <input type="text" formControlName="location" />
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('location')">
+                  {{ getUpdateErrorMessage('location') }}
+                </small>
+              </label>
+
+              <label class="update-form__field update-form__field--full">
+                <span>Description</span>
+                <textarea rows="4" formControlName="description"></textarea>
+                <small class="update-form__error" *ngIf="shouldShowUpdateError('description')">
+                  {{ getUpdateErrorMessage('description') }}
+                </small>
+              </label>
+            </div>
+
+            <div class="update-form__actions">
+              <button class="update-form__button update-form__button--secondary" type="button" (click)="resetUpdateDeviceForm()">
+                Reset changes
+              </button>
+
+              <button class="update-form__button" type="submit" [disabled]="isUpdateSubmitting">
+                {{ isUpdateSubmitting ? 'Saving changes...' : 'Update device' }}
+              </button>
+            </div>
+          </form>
+        </section>
       </div>
     </aside>
   </div>

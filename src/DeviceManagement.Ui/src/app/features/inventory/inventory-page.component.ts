@@ -6,6 +6,7 @@ import {
   DeviceResponse,
   DEVICE_TYPE_OPTIONS,
   DeviceType,
+  UpdateDeviceRequest,
   getDeviceTypeLabel
 } from '../../core/models/device.models';
 import { DeviceService } from '../../core/services/device.service';
@@ -31,17 +32,11 @@ export class InventoryPageComponent implements OnInit {
   protected isCreateSubmitting = false;
   protected createErrorMessage = '';
   protected createSuccessMessage = '';
-  protected readonly createDeviceForm = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(120)]],
-    manufacturer: ['', [Validators.required, Validators.maxLength(120)]],
-    type: [DeviceType.Phone, [Validators.required]],
-    operatingSystem: ['', [Validators.required, Validators.maxLength(120)]],
-    osVersion: ['', [Validators.required, Validators.maxLength(50)]],
-    processor: ['', [Validators.required, Validators.maxLength(120)]],
-    ramAmountGb: [8, [Validators.required, Validators.min(1), Validators.max(1024)]],
-    description: ['', [Validators.required, Validators.maxLength(1000)]],
-    location: ['', [Validators.required, Validators.maxLength(120)]]
-  });
+  protected readonly createDeviceForm = this.createDeviceFormGroup();
+  protected isUpdateSubmitting = false;
+  protected updateErrorMessage = '';
+  protected updateSuccessMessage = '';
+  protected readonly updateDeviceForm = this.createDeviceFormGroup();
 
   ngOnInit(): void {
     this.loadDevices();
@@ -58,6 +53,11 @@ export class InventoryPageComponent implements OnInit {
   protected selectDevice(deviceId: number, forceReload = false): void {
     if (!forceReload && this.selectedDeviceId === deviceId && this.selectedDevice) {
       return;
+    }
+
+    if (this.selectedDeviceId !== deviceId) {
+      this.updateErrorMessage = '';
+      this.updateSuccessMessage = '';
     }
 
     this.selectedDeviceId = deviceId;
@@ -106,34 +106,70 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected shouldShowCreateError(controlName: string): boolean {
-    const control = this.createDeviceForm.get(controlName);
-    return !!control && control.invalid && (control.touched || control.dirty);
+    return this.shouldShowFormError(this.createDeviceForm.get(controlName));
   }
 
   protected getCreateErrorMessage(controlName: string): string {
-    const control = this.createDeviceForm.get(controlName);
+    return this.getFormErrorMessage(this.createDeviceForm.get(controlName));
+  }
 
-    if (!control?.errors) {
-      return '';
+  protected submitUpdateDevice(): void {
+    this.updateErrorMessage = '';
+    this.updateSuccessMessage = '';
+
+    if (!this.selectedDevice) {
+      return;
     }
 
-    if (control.errors['required']) {
-      return 'This field is required.';
+    if (this.updateDeviceForm.invalid) {
+      this.updateDeviceForm.markAllAsTouched();
+      return;
     }
 
-    if (control.errors['maxlength']) {
-      return 'This value is longer than the allowed limit.';
+    const request = this.buildUpdateDeviceRequest(this.selectedDevice.assignedUserId);
+
+    if (this.hasDuplicateDevice(request, this.selectedDevice.id)) {
+      this.updateErrorMessage =
+        'A device with the same name, manufacturer, type, operating system, and OS version already exists.';
+      return;
     }
 
-    if (control.errors['min']) {
-      return 'The value must be at least 1.';
+    this.isUpdateSubmitting = true;
+
+    this.deviceService.updateDevice(this.selectedDevice.id, request).subscribe({
+      next: (updatedDevice) => {
+        this.isUpdateSubmitting = false;
+        this.updateSuccessMessage = `${updatedDevice.name} was updated successfully.`;
+        this.selectedDevice = updatedDevice;
+        this.populateUpdateDeviceForm(updatedDevice);
+        this.loadDevices();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isUpdateSubmitting = false;
+        this.updateErrorMessage =
+          error.status === 409
+            ? 'A matching device already exists in the inventory.'
+            : 'We could not update the device right now.';
+      }
+    });
+  }
+
+  protected resetUpdateDeviceForm(): void {
+    if (!this.selectedDevice) {
+      return;
     }
 
-    if (control.errors['max']) {
-      return 'The value is larger than the allowed limit.';
-    }
+    this.updateErrorMessage = '';
+    this.updateSuccessMessage = '';
+    this.populateUpdateDeviceForm(this.selectedDevice);
+  }
 
-    return 'This value is not valid.';
+  protected shouldShowUpdateError(controlName: string): boolean {
+    return this.shouldShowFormError(this.updateDeviceForm.get(controlName));
+  }
+
+  protected getUpdateErrorMessage(controlName: string): string {
+    return this.getFormErrorMessage(this.updateDeviceForm.get(controlName));
   }
 
   private loadDevices(): void {
@@ -168,6 +204,7 @@ export class InventoryPageComponent implements OnInit {
     this.deviceService.getDeviceById(deviceId).subscribe({
       next: (device) => {
         this.selectedDevice = device;
+        this.populateUpdateDeviceForm(device);
         this.isDetailsLoading = false;
       },
       error: () => {
@@ -189,25 +226,21 @@ export class InventoryPageComponent implements OnInit {
   }
 
   private buildCreateDeviceRequest(): CreateDeviceRequest {
-    const rawValue = this.createDeviceForm.getRawValue();
-
-    return {
-      name: rawValue.name.trim(),
-      manufacturer: rawValue.manufacturer.trim(),
-      type: rawValue.type,
-      operatingSystem: rawValue.operatingSystem.trim(),
-      osVersion: rawValue.osVersion.trim(),
-      processor: rawValue.processor.trim(),
-      ramAmountGb: rawValue.ramAmountGb,
-      description: rawValue.description.trim(),
-      location: rawValue.location.trim(),
-      assignedUserId: null
-    };
+    return this.buildDeviceRequest(this.createDeviceForm, null);
   }
 
-  private hasDuplicateDevice(request: CreateDeviceRequest): boolean {
+  private buildUpdateDeviceRequest(assignedUserId: number | null): UpdateDeviceRequest {
+    return this.buildDeviceRequest(this.updateDeviceForm, assignedUserId);
+  }
+
+  private hasDuplicateDevice(
+    request: CreateDeviceRequest | UpdateDeviceRequest,
+    excludedDeviceId?: number
+  ): boolean {
     const duplicateKey = this.buildDuplicateKey(request);
-    return this.devices.some((device) => this.buildDuplicateKey(device) === duplicateKey);
+    return this.devices.some(
+      (device) => device.id !== excludedDeviceId && this.buildDuplicateKey(device) === duplicateKey
+    );
   }
 
   private buildDuplicateKey(
@@ -240,5 +273,84 @@ export class InventoryPageComponent implements OnInit {
 
     this.createDeviceForm.markAsPristine();
     this.createDeviceForm.markAsUntouched();
+  }
+
+  private createDeviceFormGroup() {
+    return this.formBuilder.nonNullable.group({
+      name: ['', [Validators.required, Validators.maxLength(120)]],
+      manufacturer: ['', [Validators.required, Validators.maxLength(120)]],
+      type: [DeviceType.Phone, [Validators.required]],
+      operatingSystem: ['', [Validators.required, Validators.maxLength(120)]],
+      osVersion: ['', [Validators.required, Validators.maxLength(50)]],
+      processor: ['', [Validators.required, Validators.maxLength(120)]],
+      ramAmountGb: [8, [Validators.required, Validators.min(1), Validators.max(1024)]],
+      description: ['', [Validators.required, Validators.maxLength(1000)]],
+      location: ['', [Validators.required, Validators.maxLength(120)]]
+    });
+  }
+
+  private buildDeviceRequest(
+    form: typeof this.createDeviceForm,
+    assignedUserId: number | null
+  ): CreateDeviceRequest | UpdateDeviceRequest {
+    const rawValue = form.getRawValue();
+
+    return {
+      name: rawValue.name.trim(),
+      manufacturer: rawValue.manufacturer.trim(),
+      type: rawValue.type,
+      operatingSystem: rawValue.operatingSystem.trim(),
+      osVersion: rawValue.osVersion.trim(),
+      processor: rawValue.processor.trim(),
+      ramAmountGb: rawValue.ramAmountGb,
+      description: rawValue.description.trim(),
+      location: rawValue.location.trim(),
+      assignedUserId
+    };
+  }
+
+  private populateUpdateDeviceForm(device: DeviceResponse): void {
+    this.updateDeviceForm.reset({
+      name: device.name,
+      manufacturer: device.manufacturer,
+      type: device.type,
+      operatingSystem: device.operatingSystem,
+      osVersion: device.osVersion,
+      processor: device.processor,
+      ramAmountGb: device.ramAmountGb,
+      description: device.description,
+      location: device.location
+    });
+
+    this.updateDeviceForm.markAsPristine();
+    this.updateDeviceForm.markAsUntouched();
+  }
+
+  private shouldShowFormError(control: ReturnType<typeof this.createDeviceForm.get>): boolean {
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  private getFormErrorMessage(control: ReturnType<typeof this.createDeviceForm.get>): string {
+    if (!control?.errors) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return 'This field is required.';
+    }
+
+    if (control.errors['maxlength']) {
+      return 'This value is longer than the allowed limit.';
+    }
+
+    if (control.errors['min']) {
+      return 'The value must be at least 1.';
+    }
+
+    if (control.errors['max']) {
+      return 'The value is larger than the allowed limit.';
+    }
+
+    return 'This value is not valid.';
   }
 }

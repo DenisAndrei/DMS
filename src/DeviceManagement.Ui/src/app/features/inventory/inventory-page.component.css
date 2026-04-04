@@ -324,6 +324,11 @@
   padding: 1.4rem;
 }
 
+.details-panel__content {
+  display: grid;
+  gap: 1rem;
+}
+
 .details-panel__status--error {
   background: rgba(255, 241, 238, 0.96);
   border-color: rgba(176, 74, 46, 0.18);
@@ -395,6 +400,116 @@
 .details-panel__assignment-label,
 .details-panel__assignment p:last-child {
   color: rgba(244, 251, 255, 0.82);
+}
+
+.details-panel__editor {
+  border-top: 1px solid rgba(18, 38, 63, 0.08);
+  margin-top: 0.4rem;
+  padding-top: 1.2rem;
+}
+
+.details-panel__editor-note {
+  color: #4a5f77;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.update-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.update-form__grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.update-form__field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.update-form__field span {
+  color: #10233f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.update-form__field input,
+.update-form__field select,
+.update-form__field textarea {
+  border: 1px solid rgba(18, 38, 63, 0.14);
+  border-radius: 16px;
+  padding: 0.8rem 0.9rem;
+  background: rgba(248, 250, 251, 0.95);
+  color: #10233f;
+}
+
+.update-form__field input:focus,
+.update-form__field select:focus,
+.update-form__field textarea:focus {
+  border-color: rgba(36, 88, 145, 0.45);
+  box-shadow: 0 0 0 3px rgba(36, 88, 145, 0.12);
+  outline: none;
+}
+
+.update-form__error {
+  color: #b04a2e;
+  font-size: 0.8rem;
+}
+
+.update-form__status {
+  border-radius: 18px;
+  padding: 0.8rem 0.95rem;
+}
+
+.update-form__status p {
+  margin: 0;
+}
+
+.update-form__status--error {
+  background: rgba(255, 241, 238, 0.96);
+  border: 1px solid rgba(176, 74, 46, 0.18);
+}
+
+.update-form__status--success {
+  background: rgba(237, 249, 243, 0.96);
+  border: 1px solid rgba(53, 122, 92, 0.18);
+}
+
+.update-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.update-form__button {
+  border: 0;
+  border-radius: 999px;
+  background: #245891;
+  color: #f5fbff;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.8rem 1.2rem;
+}
+
+.update-form__button:hover {
+  background: #2c66a8;
+}
+
+.update-form__button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.update-form__button--secondary {
+  background: rgba(16, 35, 63, 0.08);
+  color: #10233f;
+}
+
+.update-form__button--secondary:hover {
+  background: rgba(16, 35, 63, 0.14);
 }
 
 @media (max-width: 720px) {
