@@ -1,0 +1,27 @@
+<div class="shell">
+  <header class="hero">
+    <div class="hero__content">
+      <p class="hero__eyebrow">Phase 2</p>
+      <h1>{{ title }}</h1>
+      <p class="hero__lead">
+        A simple device inventory for reviewing the company hardware assigned across the team.
+      </p>
+      <p class="hero__text">
+        The first UI slice loads all devices from the API and shows who is using each one.
+      </p>
+    </div>
+
+    <aside class="hero__card" aria-label="Application status">
+      <span class="hero__badge">Connected locally</span>
+      <h2>Frontend and API</h2>
+      <p>
+        Requests to <code>/api/*</code> are forwarded to <code>http://localhost:5145</code>
+        while the Angular app runs on <code>http://localhost:4200</code>.
+      </p>
+    </aside>
+  </header>
+
+  <main class="workspace">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,82 @@
+<section class="inventory">
+  <header class="inventory__header">
+    <div>
+      <p class="inventory__eyebrow">Devices</p>
+      <h2>Company inventory</h2>
+      <p class="inventory__intro">
+        This first screen shows all devices together with the teammate currently using each one.
+      </p>
+    </div>
+
+    <button class="inventory__action" type="button" (click)="reloadDevices()">
+      Refresh list
+    </button>
+  </header>
+
+  <div class="inventory__status" *ngIf="isLoading">
+    <p>Loading devices from the API...</p>
+  </div>
+
+  <div class="inventory__status inventory__status--error" *ngIf="!isLoading && errorMessage">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div class="inventory__empty" *ngIf="!isLoading && !errorMessage && devices.length === 0">
+    <h3>No devices found</h3>
+    <p>The API did not return any devices yet.</p>
+  </div>
+
+  <div class="inventory__grid" *ngIf="!isLoading && !errorMessage && devices.length > 0">
+    <article class="device-card" *ngFor="let device of devices">
+      <div class="device-card__top">
+        <div>
+          <p class="device-card__type">{{ getDeviceTypeLabel(device.type) }}</p>
+          <h3>{{ device.name }}</h3>
+          <p class="device-card__manufacturer">{{ device.manufacturer }}</p>
+        </div>
+
+        <span
+          class="device-card__availability"
+          [class.device-card__availability--available]="!device.assignedUser"
+        >
+          {{ device.assignedUser ? 'Assigned' : 'Available' }}
+        </span>
+      </div>
+
+      <dl class="device-card__specs">
+        <div>
+          <dt>OS</dt>
+          <dd>{{ device.operatingSystem }} {{ device.osVersion }}</dd>
+        </div>
+        <div>
+          <dt>Processor</dt>
+          <dd>{{ device.processor }}</dd>
+        </div>
+        <div>
+          <dt>RAM</dt>
+          <dd>{{ device.ramAmountGb }} GB</dd>
+        </div>
+        <div>
+          <dt>Location</dt>
+          <dd>{{ device.location }}</dd>
+        </div>
+      </dl>
+
+      <p class="device-card__description">{{ device.description }}</p>
+
+      <section class="device-card__assignment" *ngIf="device.assignedUser; else availableState">
+        <p class="device-card__assignment-label">Currently used by</p>
+        <h4>{{ device.assignedUser.name }}</h4>
+        <p>{{ device.assignedUser.role }} · {{ device.assignedUser.location }}</p>
+      </section>
+
+      <ng-template #availableState>
+        <section class="device-card__assignment device-card__assignment--available">
+          <p class="device-card__assignment-label">Assignment</p>
+          <h4>Ready to assign</h4>
+          <p>This device is currently not assigned to any user.</p>
+        </section>
+      </ng-template>
+    </article>
+  </div>
+</section>
