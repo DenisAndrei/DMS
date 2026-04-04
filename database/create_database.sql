@@ -46,6 +46,25 @@ BEGIN
 END
 GO
 
+-- Login data is stored separately from the inventory data.
+IF OBJECT_ID(N'dbo.Accounts', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Accounts
+    (
+        Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Accounts PRIMARY KEY,
+        UserId INT NOT NULL,
+        Email NVARCHAR(256) NOT NULL,
+        PasswordHash NVARCHAR(128) NOT NULL,
+        PasswordSalt NVARCHAR(128) NOT NULL,
+        CreatedAtUtc DATETIME2(0) NOT NULL CONSTRAINT DF_Accounts_CreatedAtUtc DEFAULT SYSUTCDATETIME(),
+        UpdatedAtUtc DATETIME2(0) NOT NULL CONSTRAINT DF_Accounts_UpdatedAtUtc DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT FK_Accounts_User FOREIGN KEY (UserId) REFERENCES dbo.Users(Id),
+        CONSTRAINT UX_Accounts_UserId UNIQUE (UserId),
+        CONSTRAINT UX_Accounts_Email UNIQUE (Email)
+    );
+END
+GO
+
 -- Keep this index in sync with the duplicate check in the API.
 IF NOT EXISTS
 (

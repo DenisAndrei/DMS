@@ -90,3 +90,28 @@ WHEN NOT MATCHED THEN
         Source.AssignedUserId
     );
 GO
+
+-- Seed one demo account so Phase 3 login has a local user to work with.
+;WITH SeedAccounts AS
+(
+    SELECT
+        Users.Id AS UserId,
+        N'alexandra.ionescu@darwin.local' AS Email,
+        N'vD1uaiSRhBZ9HdXi7dv7XyHf8vWRDov2whFN/Fy9Ak0=' AS PasswordHash,
+        N'3o/nKlhshjEhe5//XGIDaA==' AS PasswordSalt
+    FROM dbo.Users AS Users
+    WHERE Users.Name = N'Alexandra Ionescu'
+)
+MERGE dbo.Accounts AS Target
+USING SeedAccounts AS Source
+ON Target.Email = Source.Email
+WHEN MATCHED THEN
+    UPDATE SET
+        Target.UserId = Source.UserId,
+        Target.PasswordHash = Source.PasswordHash,
+        Target.PasswordSalt = Source.PasswordSalt,
+        Target.UpdatedAtUtc = SYSUTCDATETIME()
+WHEN NOT MATCHED THEN
+    INSERT (UserId, Email, PasswordHash, PasswordSalt)
+    VALUES (Source.UserId, Source.Email, Source.PasswordHash, Source.PasswordSalt);
+GO
