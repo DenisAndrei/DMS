@@ -172,6 +172,11 @@
   border-color: rgba(176, 74, 46, 0.18);
 }
 
+.inventory__status--success {
+  background: rgba(237, 249, 243, 0.96);
+  border-color: rgba(53, 122, 92, 0.18);
+}
+
 .inventory__grid {
   display: grid;
   gap: 1.25rem;
@@ -308,6 +313,26 @@
 
 .device-card__button:hover {
   background: rgba(16, 35, 63, 0.14);
+}
+
+.device-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.device-card__button--danger {
+  background: rgba(176, 74, 46, 0.12);
+  color: #a6422c;
+}
+
+.device-card__button--danger:hover {
+  background: rgba(176, 74, 46, 0.18);
+}
+
+.device-card__button:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .details-panel {

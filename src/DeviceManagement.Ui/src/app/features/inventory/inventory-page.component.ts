@@ -33,6 +33,9 @@ export class InventoryPageComponent implements OnInit {
   protected createErrorMessage = '';
   protected createSuccessMessage = '';
   protected readonly createDeviceForm = this.createDeviceFormGroup();
+  protected deletingDeviceId: number | null = null;
+  protected deleteErrorMessage = '';
+  protected deleteSuccessMessage = '';
   protected isUpdateSubmitting = false;
   protected updateErrorMessage = '';
   protected updateSuccessMessage = '';
@@ -55,6 +58,9 @@ export class InventoryPageComponent implements OnInit {
       return;
     }
 
+    this.deleteErrorMessage = '';
+    this.deleteSuccessMessage = '';
+
     if (this.selectedDeviceId !== deviceId) {
       this.updateErrorMessage = '';
       this.updateSuccessMessage = '';
@@ -66,6 +72,43 @@ export class InventoryPageComponent implements OnInit {
 
   protected isSelectedDevice(deviceId: number): boolean {
     return this.selectedDeviceId === deviceId;
+  }
+
+  protected deleteDevice(device: DeviceResponse): void {
+    this.deleteErrorMessage = '';
+    this.deleteSuccessMessage = '';
+
+    const shouldDelete = confirm(`Delete ${device.name} from the inventory?`);
+    if (!shouldDelete) {
+      return;
+    }
+
+    this.deletingDeviceId = device.id;
+
+    this.deviceService.deleteDevice(device.id).subscribe({
+      next: () => {
+        this.deletingDeviceId = null;
+        this.deleteSuccessMessage = `${device.name} was removed from the inventory.`;
+
+        if (this.selectedDeviceId === device.id) {
+          this.selectedDevice = null;
+          this.selectedDeviceId = null;
+          this.detailsErrorMessage = '';
+          this.updateErrorMessage = '';
+          this.updateSuccessMessage = '';
+        }
+
+        this.loadDevices();
+      },
+      error: () => {
+        this.deletingDeviceId = null;
+        this.deleteErrorMessage = `We could not delete ${device.name} right now.`;
+      }
+    });
+  }
+
+  protected isDeletingDevice(deviceId: number): boolean {
+    return this.deletingDeviceId === deviceId;
   }
 
   protected submitCreateDevice(): void {

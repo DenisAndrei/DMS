@@ -115,6 +115,14 @@
     </form>
   </section>
 
+  <div class="inventory__status inventory__status--error" *ngIf="deleteErrorMessage">
+    <p>{{ deleteErrorMessage }}</p>
+  </div>
+
+  <div class="inventory__status inventory__status--success" *ngIf="deleteSuccessMessage">
+    <p>{{ deleteSuccessMessage }}</p>
+  </div>
+
   <div class="inventory__status" *ngIf="isLoading">
     <p>Loading devices from the API...</p>
   </div>
@@ -185,9 +193,20 @@
           </section>
         </ng-template>
 
-        <button class="device-card__button" type="button" (click)="selectDevice(device.id)">
-          {{ isSelectedDevice(device.id) ? 'Showing details' : 'View details' }}
-        </button>
+        <div class="device-card__actions">
+          <button class="device-card__button" type="button" (click)="selectDevice(device.id)">
+            {{ isSelectedDevice(device.id) ? 'Showing details' : 'View details' }}
+          </button>
+
+          <button
+            class="device-card__button device-card__button--danger"
+            type="button"
+            [disabled]="isDeletingDevice(device.id)"
+            (click)="deleteDevice(device)"
+          >
+            {{ isDeletingDevice(device.id) ? 'Deleting...' : 'Delete device' }}
+          </button>
+        </div>
       </article>
     </div>
 
