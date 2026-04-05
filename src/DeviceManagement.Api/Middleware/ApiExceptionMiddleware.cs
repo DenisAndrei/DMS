@@ -45,6 +45,14 @@ public sealed class ApiExceptionMiddleware
                 "The request could not be completed.",
                 exception.Message);
         }
+        catch (ForbiddenException exception)
+        {
+            await WriteProblemDetailsAsync(
+                context,
+                StatusCodes.Status403Forbidden,
+                "You are not allowed to perform this action.",
+                exception.Message);
+        }
         catch (UnauthorizedException exception)
         {
             await WriteProblemDetailsAsync(

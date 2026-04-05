@@ -110,6 +110,11 @@ Authorization: Bearer {{AccessToken}}
 
 ###
 
+POST {{DeviceManagement.Api_HostAddress}}/api/devices/1/unassign
+Authorization: Bearer {{AccessToken}}
+
+###
+
 POST {{DeviceManagement.Api_HostAddress}}/api/auth/register
 Content-Type: application/json
 

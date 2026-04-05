@@ -15,5 +15,7 @@ public interface IDeviceService
 
     Task<DeviceResponse> AssignToUserAsync(int id, int userId, CancellationToken cancellationToken);
 
+    Task<DeviceResponse> UnassignFromUserAsync(int id, int userId, CancellationToken cancellationToken);
+
     Task DeleteAsync(int id, CancellationToken cancellationToken);
 }

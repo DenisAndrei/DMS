@@ -128,6 +128,39 @@ public sealed class DeviceService : IDeviceService
         return MapDeviceResponse(updatedDevice);
     }
 
+    public async Task<DeviceResponse> UnassignFromUserAsync(int id, int userId, CancellationToken cancellationToken)
+    {
+        var device = await _deviceRepository.GetByIdAsync(id, cancellationToken);
+        if (device is null)
+        {
+            throw new EntityNotFoundException("Device", id);
+        }
+
+        if (!device.AssignedUserId.HasValue)
+        {
+            throw new ConflictException("The device is not assigned to any user.");
+        }
+
+        if (device.AssignedUserId.Value != userId)
+        {
+            throw new ForbiddenException("You can only unassign a device assigned to your account.");
+        }
+
+        var unassigned = await _deviceRepository.UnassignAsync(id, userId, cancellationToken);
+        if (!unassigned)
+        {
+            throw new ConflictException("The device could not be unassigned.");
+        }
+
+        var updatedDevice = await _deviceRepository.GetByIdAsync(id, cancellationToken);
+        if (updatedDevice is null)
+        {
+            throw new EntityNotFoundException("Device", id);
+        }
+
+        return MapDeviceResponse(updatedDevice);
+    }
+
     public async Task DeleteAsync(int id, CancellationToken cancellationToken)
     {
         var deleted = await _deviceRepository.DeleteAsync(id, cancellationToken);

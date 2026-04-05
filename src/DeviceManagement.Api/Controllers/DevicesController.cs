@@ -82,6 +82,19 @@ public sealed class DevicesController : ControllerBase
         return Ok(device);
     }
 
+    [HttpPost("{id:int}/unassign")]
+    [ProducesResponseType(typeof(DeviceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<DeviceResponse>> UnassignAsync(int id, CancellationToken cancellationToken)
+    {
+        var userId = User.GetRequiredUserId();
+        var device = await _deviceService.UnassignFromUserAsync(id, userId, cancellationToken);
+        return Ok(device);
+    }
+
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
