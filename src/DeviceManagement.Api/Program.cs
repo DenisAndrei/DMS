@@ -24,6 +24,7 @@ builder.Services
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
+builder.Services.Configure<AiOptions>(builder.Configuration.GetSection(AiOptions.SectionName));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
