@@ -240,6 +240,11 @@
   color: #245891;
 }
 
+.device-card__availability--mine {
+  background: rgba(25, 95, 77, 0.18);
+  color: #195f4d;
+}
+
 .device-card__specs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -425,6 +430,24 @@
 .details-panel__assignment-label,
 .details-panel__assignment p:last-child {
   color: rgba(244, 251, 255, 0.82);
+}
+
+.details-panel__self-service {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.4rem;
+}
+
+.details-panel__action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.details-panel__action-note {
+  color: #4a5f77;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .details-panel__editor {

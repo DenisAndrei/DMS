@@ -30,6 +30,14 @@ export class DeviceService {
     return this.httpClient.put<DeviceResponse>(`${this.devicesEndpoint}/${deviceId}`, request);
   }
 
+  assignDeviceToSelf(deviceId: number): Observable<DeviceResponse> {
+    return this.httpClient.post<DeviceResponse>(`${this.devicesEndpoint}/${deviceId}/assign`, {});
+  }
+
+  unassignDeviceFromSelf(deviceId: number): Observable<DeviceResponse> {
+    return this.httpClient.post<DeviceResponse>(`${this.devicesEndpoint}/${deviceId}/unassign`, {});
+  }
+
   deleteDevice(deviceId: number): Observable<void> {
     return this.httpClient.delete<void>(`${this.devicesEndpoint}/${deviceId}`);
   }

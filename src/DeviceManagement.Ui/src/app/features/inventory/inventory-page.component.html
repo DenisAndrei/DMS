@@ -153,8 +153,15 @@
           <span
             class="device-card__availability"
             [class.device-card__availability--available]="!device.assignedUser"
+            [class.device-card__availability--mine]="isAssignedToCurrentUser(device)"
           >
-            {{ device.assignedUser ? 'Assigned' : 'Available' }}
+            {{
+              isAssignedToCurrentUser(device)
+                ? 'Assigned to you'
+                : device.assignedUser
+                  ? 'Assigned'
+                  : 'Available'
+            }}
           </span>
         </div>
 
@@ -181,7 +188,7 @@
 
         <section class="device-card__assignment" *ngIf="device.assignedUser; else availableState">
           <p class="device-card__assignment-label">Currently used by</p>
-          <h4>{{ device.assignedUser.name }}</h4>
+          <h4>{{ isAssignedToCurrentUser(device) ? 'You' : device.assignedUser.name }}</h4>
           <p>{{ device.assignedUser.role }} - {{ device.assignedUser.location }}</p>
         </section>
 
@@ -258,8 +265,10 @@
           class="details-panel__assignment"
           *ngIf="selectedDevice.assignedUser; else selectedAvailableState"
         >
-          <p class="details-panel__assignment-label">Assigned to</p>
-          <h4>{{ selectedDevice.assignedUser.name }}</h4>
+          <p class="details-panel__assignment-label">
+            {{ isAssignedToCurrentUser(selectedDevice) ? 'Assigned to you' : 'Assigned to' }}
+          </p>
+          <h4>{{ isAssignedToCurrentUser(selectedDevice) ? 'You' : selectedDevice.assignedUser.name }}</h4>
           <p>{{ selectedDevice.assignedUser.role }} - {{ selectedDevice.assignedUser.location }}</p>
         </section>
 
@@ -271,11 +280,49 @@
           </section>
         </ng-template>
 
+        <section class="details-panel__self-service">
+          <div class="update-form__status update-form__status--error" *ngIf="assignmentErrorMessage">
+            <p>{{ assignmentErrorMessage }}</p>
+          </div>
+
+          <div class="update-form__status update-form__status--success" *ngIf="assignmentSuccessMessage">
+            <p>{{ assignmentSuccessMessage }}</p>
+          </div>
+
+          <div class="details-panel__action-row" *ngIf="canAssignSelectedDevice() || canUnassignSelectedDevice(); else assignmentReadOnlyState">
+            <button
+              class="update-form__button"
+              type="button"
+              *ngIf="canAssignSelectedDevice()"
+              [disabled]="isAssignSubmitting"
+              (click)="assignSelectedDevice()"
+            >
+              {{ isAssignSubmitting ? 'Assigning...' : 'Assign to me' }}
+            </button>
+
+            <button
+              class="update-form__button update-form__button--secondary"
+              type="button"
+              *ngIf="canUnassignSelectedDevice()"
+              [disabled]="isUnassignSubmitting"
+              (click)="unassignSelectedDevice()"
+            >
+              {{ isUnassignSubmitting ? 'Unassigning...' : 'Unassign from me' }}
+            </button>
+          </div>
+
+          <ng-template #assignmentReadOnlyState>
+            <p class="details-panel__action-note" *ngIf="selectedDevice.assignedUser">
+              This device is currently assigned to another user.
+            </p>
+          </ng-template>
+        </section>
+
         <section class="details-panel__editor">
           <div class="details-panel__editor-copy">
             <p class="details-panel__assignment-label">Edit selected device</p>
             <p class="details-panel__editor-note">
-              Update the device details here. The current assignment stays unchanged in Phase 2.
+              Update the device details here. Assignment is handled with the self-service actions above.
             </p>
           </div>
 

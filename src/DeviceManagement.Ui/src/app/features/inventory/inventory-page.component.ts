@@ -9,6 +9,7 @@ import {
   UpdateDeviceRequest,
   getDeviceTypeLabel
 } from '../../core/models/device.models';
+import { AuthSessionService } from '../../core/services/auth-session.service';
 import { DeviceService } from '../../core/services/device.service';
 
 @Component({
@@ -18,9 +19,11 @@ import { DeviceService } from '../../core/services/device.service';
   standalone: false
 })
 export class InventoryPageComponent implements OnInit {
+  private readonly authSession = inject(AuthSessionService);
   private readonly deviceService = inject(DeviceService);
   private readonly formBuilder = inject(FormBuilder);
 
+  protected readonly currentUser = this.authSession.currentUser;
   protected devices: DeviceResponse[] = [];
   protected isLoading = true;
   protected errorMessage = '';
@@ -40,6 +43,10 @@ export class InventoryPageComponent implements OnInit {
   protected updateErrorMessage = '';
   protected updateSuccessMessage = '';
   protected readonly updateDeviceForm = this.createDeviceFormGroup();
+  protected isAssignSubmitting = false;
+  protected isUnassignSubmitting = false;
+  protected assignmentErrorMessage = '';
+  protected assignmentSuccessMessage = '';
 
   ngOnInit(): void {
     this.loadDevices();
@@ -60,6 +67,8 @@ export class InventoryPageComponent implements OnInit {
 
     this.deleteErrorMessage = '';
     this.deleteSuccessMessage = '';
+    this.assignmentErrorMessage = '';
+    this.assignmentSuccessMessage = '';
 
     if (this.selectedDeviceId !== deviceId) {
       this.updateErrorMessage = '';
@@ -72,6 +81,18 @@ export class InventoryPageComponent implements OnInit {
 
   protected isSelectedDevice(deviceId: number): boolean {
     return this.selectedDeviceId === deviceId;
+  }
+
+  protected isAssignedToCurrentUser(device: DeviceResponse): boolean {
+    return device.assignedUserId !== null && device.assignedUserId === this.currentUser()?.userId;
+  }
+
+  protected canAssignSelectedDevice(): boolean {
+    return !!this.selectedDevice && !!this.currentUser() && !this.selectedDevice.assignedUserId;
+  }
+
+  protected canUnassignSelectedDevice(): boolean {
+    return !!this.selectedDevice && this.isAssignedToCurrentUser(this.selectedDevice);
   }
 
   protected deleteDevice(device: DeviceResponse): void {
@@ -89,6 +110,8 @@ export class InventoryPageComponent implements OnInit {
       next: () => {
         this.deletingDeviceId = null;
         this.deleteSuccessMessage = `${device.name} was removed from the inventory.`;
+        this.assignmentErrorMessage = '';
+        this.assignmentSuccessMessage = '';
 
         if (this.selectedDeviceId === device.id) {
           this.selectedDevice = null;
@@ -109,6 +132,56 @@ export class InventoryPageComponent implements OnInit {
 
   protected isDeletingDevice(deviceId: number): boolean {
     return this.deletingDeviceId === deviceId;
+  }
+
+  protected assignSelectedDevice(): void {
+    if (!this.selectedDevice) {
+      return;
+    }
+
+    this.assignmentErrorMessage = '';
+    this.assignmentSuccessMessage = '';
+    this.isAssignSubmitting = true;
+
+    this.deviceService.assignDeviceToSelf(this.selectedDevice.id).subscribe({
+      next: (updatedDevice) => {
+        this.isAssignSubmitting = false;
+        this.replaceDeviceInState(updatedDevice);
+        this.assignmentSuccessMessage = `${updatedDevice.name} is now assigned to you.`;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isAssignSubmitting = false;
+        this.assignmentErrorMessage =
+          error.status === 409
+            ? 'This device is already assigned to another user.'
+            : 'We could not assign this device right now.';
+      }
+    });
+  }
+
+  protected unassignSelectedDevice(): void {
+    if (!this.selectedDevice) {
+      return;
+    }
+
+    this.assignmentErrorMessage = '';
+    this.assignmentSuccessMessage = '';
+    this.isUnassignSubmitting = true;
+
+    this.deviceService.unassignDeviceFromSelf(this.selectedDevice.id).subscribe({
+      next: (updatedDevice) => {
+        this.isUnassignSubmitting = false;
+        this.replaceDeviceInState(updatedDevice);
+        this.assignmentSuccessMessage = `${updatedDevice.name} was released from your assignments.`;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isUnassignSubmitting = false;
+        this.assignmentErrorMessage =
+          error.status === 403
+            ? 'You can only unassign a device that is assigned to your account.'
+            : 'We could not unassign this device right now.';
+      }
+    });
   }
 
   protected submitCreateDevice(): void {
@@ -367,6 +440,16 @@ export class InventoryPageComponent implements OnInit {
 
     this.updateDeviceForm.markAsPristine();
     this.updateDeviceForm.markAsUntouched();
+  }
+
+  private replaceDeviceInState(updatedDevice: DeviceResponse): void {
+    this.devices = this.devices
+      .map((device) => (device.id === updatedDevice.id ? updatedDevice : device))
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    this.selectedDevice = updatedDevice;
+    this.selectedDeviceId = updatedDevice.id;
+    this.populateUpdateDeviceForm(updatedDevice);
   }
 
   private shouldShowFormError(control: ReturnType<typeof this.createDeviceForm.get>): boolean {
