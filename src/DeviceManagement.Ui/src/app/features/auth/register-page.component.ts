@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { ProblemDetails } from '../../core/models/problem-details.model';
@@ -17,6 +18,7 @@ export class RegisterPageComponent {
   private readonly authApi = inject(AuthApiService);
   private readonly authSession = inject(AuthSessionService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   protected isSubmitting = false;
   protected errorMessage = '';
@@ -49,8 +51,9 @@ export class RegisterPageComponent {
       );
 
       this.authSession.persistSession(response);
-      this.successMessage = 'Account created successfully. Your session is now stored in the browser.';
+      this.successMessage = 'Account created successfully.';
       this.registerForm.controls.password.reset('');
+      await this.router.navigateByUrl('/inventory');
     } catch (error) {
       this.errorMessage = this.toProblemMessage(error, 'Unable to create the account.');
     } finally {
