@@ -1,0 +1,47 @@
+<section class="auth-shell">
+  <div class="auth-shell__panel">
+    <div class="auth-shell__copy">
+      <p class="eyebrow">Phase 3</p>
+      <h1>Sign in to continue to the protected inventory.</h1>
+      <p>
+        The API now requires authentication before you can load devices, update hardware details,
+        or assign a device to yourself.
+      </p>
+      <div class="auth-shell__hint">
+        <p class="auth-shell__hint-title">Demo account</p>
+        <p><strong>Email:</strong> alexandra.ionescu@darwin.local</p>
+        <p><strong>Password:</strong> Darwin123!</p>
+      </div>
+    </div>
+
+    <form class="auth-card" [formGroup]="loginForm" (ngSubmit)="submitLoginAsync()">
+      <div>
+        <p class="eyebrow">Welcome back</p>
+        <h2>Log in</h2>
+      </div>
+
+      <p class="auth-card__text">
+        This step stores the JWT response locally so the next UI auth slices can use it.
+      </p>
+
+      <p *ngIf="errorMessage" class="notice notice--error">{{ errorMessage }}</p>
+      <p *ngIf="successMessage" class="notice notice--success">{{ successMessage }}</p>
+
+      <label class="field">
+        <span>Email</span>
+        <input type="email" formControlName="email" placeholder="alexandra.ionescu@darwin.local" />
+        <small *ngIf="fieldError('email')" class="field__error">{{ fieldError('email') }}</small>
+      </label>
+
+      <label class="field">
+        <span>Password</span>
+        <input type="password" formControlName="password" placeholder="At least 8 characters" />
+        <small *ngIf="fieldError('password')" class="field__error">{{ fieldError('password') }}</small>
+      </label>
+
+      <button type="submit" class="button button--primary" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Signing in...' : 'Log in' }}
+      </button>
+    </form>
+  </div>
+</section>
