@@ -45,6 +45,14 @@ public sealed class ApiExceptionMiddleware
                 "The request could not be completed.",
                 exception.Message);
         }
+        catch (UnauthorizedException exception)
+        {
+            await WriteProblemDetailsAsync(
+                context,
+                StatusCodes.Status401Unauthorized,
+                "Authentication failed.",
+                exception.Message);
+        }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Unhandled exception while processing request.");

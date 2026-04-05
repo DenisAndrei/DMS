@@ -1,5 +1,7 @@
 @DeviceManagement.Api_HostAddress = http://localhost:5145
 @UserId = 1
+@AuthEmail = new.employee@darwin.local
+@AuthPassword = Darwin123!
 
 GET {{DeviceManagement.Api_HostAddress}}/
 Accept: application/json
@@ -39,5 +41,25 @@ Content-Type: application/json
 ###
 
 DELETE {{DeviceManagement.Api_HostAddress}}/api/users/{{UserId}}
+
+###
+
+POST {{DeviceManagement.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{AuthEmail}}",
+  "password": "{{AuthPassword}}"
+}
+
+###
+
+POST {{DeviceManagement.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "alexandra.ionescu@darwin.local",
+  "password": "Darwin123!"
+}
 
 ###
