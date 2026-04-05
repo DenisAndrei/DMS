@@ -13,7 +13,7 @@ public sealed class DevicesValidationTests : IClassFixture<ApiApplicationFactory
     }
 
     [Fact]
-    public async Task PostDevice_WithMissingRequiredValues_ReturnsBadRequest()
+    public async Task PostDevice_WithoutJwtToken_ReturnsUnauthorized()
     {
         var response = await _client.PostAsJsonAsync(
             "/api/devices",
@@ -31,6 +31,6 @@ public sealed class DevicesValidationTests : IClassFixture<ApiApplicationFactory
                 assignedUserId = (int?)null
             });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }

@@ -1,11 +1,13 @@
 using DeviceManagement.Api.Contracts.Requests;
 using DeviceManagement.Api.Contracts.Responses;
 using DeviceManagement.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeviceManagement.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/users")]
 public sealed class UsersController : ControllerBase
 {
@@ -18,6 +20,7 @@ public sealed class UsersController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyCollection<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyCollection<UserResponse>>> GetAllAsync(CancellationToken cancellationToken)
     {
         var users = await _userService.GetAllAsync(cancellationToken);
@@ -27,6 +30,7 @@ public sealed class UsersController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserResponse>> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         var user = await _userService.GetByIdAsync(id, cancellationToken);
@@ -36,6 +40,7 @@ public sealed class UsersController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserResponse>> CreateAsync(
         [FromBody] CreateUserRequest request,
         CancellationToken cancellationToken)
@@ -53,6 +58,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserResponse>> UpdateAsync(
         int id,
         [FromBody] UpdateUserRequest request,
@@ -66,6 +72,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
     {
         await _userService.DeleteAsync(id, cancellationToken);

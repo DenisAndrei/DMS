@@ -1,11 +1,14 @@
 using DeviceManagement.Api.Contracts.Requests;
 using DeviceManagement.Api.Contracts.Responses;
+using DeviceManagement.Api.Extensions;
 using DeviceManagement.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeviceManagement.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/devices")]
 public sealed class DevicesController : ControllerBase
 {
@@ -18,6 +21,7 @@ public sealed class DevicesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyCollection<DeviceResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyCollection<DeviceResponse>>> GetAllAsync(CancellationToken cancellationToken)
     {
         var devices = await _deviceService.GetAllAsync(cancellationToken);
@@ -27,6 +31,7 @@ public sealed class DevicesController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(DeviceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<DeviceResponse>> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         var device = await _deviceService.GetByIdAsync(id, cancellationToken);
@@ -37,6 +42,7 @@ public sealed class DevicesController : ControllerBase
     [ProducesResponseType(typeof(DeviceResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<DeviceResponse>> CreateAsync(
         [FromBody] CreateDeviceRequest request,
         CancellationToken cancellationToken)
@@ -54,6 +60,7 @@ public sealed class DevicesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<DeviceResponse>> UpdateAsync(
         int id,
         [FromBody] UpdateDeviceRequest request,
@@ -63,9 +70,22 @@ public sealed class DevicesController : ControllerBase
         return Ok(updatedDevice);
     }
 
+    [HttpPost("{id:int}/assign")]
+    [ProducesResponseType(typeof(DeviceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<DeviceResponse>> AssignAsync(int id, CancellationToken cancellationToken)
+    {
+        var userId = User.GetRequiredUserId();
+        var device = await _deviceService.AssignToUserAsync(id, userId, cancellationToken);
+        return Ok(device);
+    }
+
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteAsync(int id, CancellationToken cancellationToken)
     {
         await _deviceService.DeleteAsync(id, cancellationToken);

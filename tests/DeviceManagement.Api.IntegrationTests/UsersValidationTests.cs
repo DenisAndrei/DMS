@@ -13,7 +13,7 @@ public sealed class UsersValidationTests : IClassFixture<ApiApplicationFactory>
     }
 
     [Fact]
-    public async Task PostUser_WithMissingRequiredValues_ReturnsBadRequest()
+    public async Task PostUser_WithoutJwtToken_ReturnsUnauthorized()
     {
         var response = await _client.PostAsJsonAsync(
             "/api/users",
@@ -24,6 +24,6 @@ public sealed class UsersValidationTests : IClassFixture<ApiApplicationFactory>
                 location = ""
             });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }

@@ -167,6 +167,26 @@ public sealed class DeviceRepository : IDeviceRepository
         return affectedRows > 0;
     }
 
+    public async Task<bool> AssignAsync(int id, int userId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            UPDATE dbo.Devices
+            SET
+                AssignedUserId = @UserId,
+                UpdatedAtUtc = SYSUTCDATETIME()
+            WHERE Id = @Id
+              AND AssignedUserId IS NULL;
+            """;
+
+        using var connection = await _dbConnectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(sql, connection);
+        command.Parameters.Add("@Id", System.Data.SqlDbType.Int).Value = id;
+        command.Parameters.Add("@UserId", System.Data.SqlDbType.Int).Value = userId;
+
+        var affectedRows = await command.ExecuteNonQueryAsync(cancellationToken);
+        return affectedRows > 0;
+    }
+
     public async Task<bool> ExistsDuplicateAsync(
         string name,
         string manufacturer,

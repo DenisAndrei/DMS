@@ -2,6 +2,7 @@
 @UserId = 1
 @AuthEmail = new.employee@darwin.local
 @AuthPassword = Darwin123!
+@AccessToken = paste-jwt-here
 
 GET {{DeviceManagement.Api_HostAddress}}/
 Accept: application/json
@@ -10,16 +11,19 @@ Accept: application/json
 
 GET {{DeviceManagement.Api_HostAddress}}/api/users
 Accept: application/json
+Authorization: Bearer {{AccessToken}}
 
 ###
 
 GET {{DeviceManagement.Api_HostAddress}}/api/users/{{UserId}}
 Accept: application/json
+Authorization: Bearer {{AccessToken}}
 
 ###
 
 POST {{DeviceManagement.Api_HostAddress}}/api/users
 Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
 
 {
   "name": "Andrei Marin",
@@ -31,6 +35,7 @@ Content-Type: application/json
 
 PUT {{DeviceManagement.Api_HostAddress}}/api/users/{{UserId}}
 Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
 
 {
   "name": "Alexandra Ionescu",
@@ -41,6 +46,67 @@ Content-Type: application/json
 ###
 
 DELETE {{DeviceManagement.Api_HostAddress}}/api/users/{{UserId}}
+Authorization: Bearer {{AccessToken}}
+
+###
+
+GET {{DeviceManagement.Api_HostAddress}}/api/devices
+Accept: application/json
+Authorization: Bearer {{AccessToken}}
+
+###
+
+GET {{DeviceManagement.Api_HostAddress}}/api/devices/1
+Accept: application/json
+Authorization: Bearer {{AccessToken}}
+
+###
+
+POST {{DeviceManagement.Api_HostAddress}}/api/devices
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
+
+{
+  "name": "Pixel 10",
+  "manufacturer": "Google",
+  "type": 0,
+  "operatingSystem": "Android",
+  "osVersion": "16",
+  "processor": "Tensor G5",
+  "ramAmountGb": 12,
+  "description": "Company-owned Android phone for field testing.",
+  "location": "Bucharest",
+  "assignedUserId": null
+}
+
+###
+
+PUT {{DeviceManagement.Api_HostAddress}}/api/devices/1
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
+
+{
+  "name": "iPhone 15 Pro",
+  "manufacturer": "Apple",
+  "type": 0,
+  "operatingSystem": "iOS",
+  "osVersion": "17.4",
+  "processor": "A17 Pro",
+  "ramAmountGb": 8,
+  "description": "Updated sample payload for a protected device request.",
+  "location": "Bucharest",
+  "assignedUserId": 1
+}
+
+###
+
+DELETE {{DeviceManagement.Api_HostAddress}}/api/devices/1
+Authorization: Bearer {{AccessToken}}
+
+###
+
+POST {{DeviceManagement.Api_HostAddress}}/api/devices/1/assign
+Authorization: Bearer {{AccessToken}}
 
 ###
 

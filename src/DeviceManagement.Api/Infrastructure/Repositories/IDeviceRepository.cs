@@ -14,6 +14,8 @@ public interface IDeviceRepository
 
     Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
 
+    Task<bool> AssignAsync(int id, int userId, CancellationToken cancellationToken);
+
     Task<bool> ExistsDuplicateAsync(
         string name,
         string manufacturer,
