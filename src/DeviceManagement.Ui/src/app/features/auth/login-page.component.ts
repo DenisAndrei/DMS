@@ -53,7 +53,7 @@ export class LoginPageComponent {
       this.authSession.persistSession(response);
       this.successMessage = 'Signed in successfully.';
       this.loginForm.controls.password.reset('');
-      await this.router.navigateByUrl('/inventory');
+      await this.router.navigateByUrl('/');
     } catch (error) {
       this.errorMessage = this.toProblemMessage(error, 'Unable to sign in right now.');
     } finally {

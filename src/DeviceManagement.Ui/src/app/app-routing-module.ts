@@ -7,11 +7,6 @@ import { InventoryPageComponent } from './features/inventory/inventory-page.comp
 
 const routes: Routes = [
   {
-    path: '',
-    pathMatch: 'full',
-    redirectTo: 'inventory'
-  },
-  {
     path: 'login',
     canActivate: [guestGuard],
     component: LoginPageComponent
@@ -23,12 +18,17 @@ const routes: Routes = [
   },
   {
     path: 'inventory',
+    pathMatch: 'full',
+    redirectTo: ''
+  },
+  {
+    path: '',
     canActivate: [authGuard],
     component: InventoryPageComponent
   },
   {
     path: '**',
-    redirectTo: 'login'
+    redirectTo: ''
   }
 ];
 

@@ -53,7 +53,7 @@ export class RegisterPageComponent {
       this.authSession.persistSession(response);
       this.successMessage = 'Account created successfully.';
       this.registerForm.controls.password.reset('');
-      await this.router.navigateByUrl('/inventory');
+      await this.router.navigateByUrl('/');
     } catch (error) {
       this.errorMessage = this.toProblemMessage(error, 'Unable to create the account.');
     } finally {

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using DeviceManagement.Api.Infrastructure.Data;
 using DeviceManagement.Api.Infrastructure.Repositories;
 using DeviceManagement.Api.Middleware;
@@ -14,7 +16,13 @@ var authOptions = builder.Configuration
     ?? throw new InvalidOperationException("Authentication configuration is missing.");
 
 builder.Services.AddProblemDetails();
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services
@@ -52,11 +60,15 @@ app.UseAuthorization();
 app.MapGet("/", () => Results.Ok(new
 {
     name = "Device Management API",
-    phase = "Phase 1",
+    phase = "Phase 3",
     endpoints = new[]
     {
+        "/api/auth/register",
+        "/api/auth/login",
         "/api/users",
-        "/api/devices"
+        "/api/devices",
+        "/api/devices/{id}/assign",
+        "/api/devices/{id}/unassign"
     }
 }));
 

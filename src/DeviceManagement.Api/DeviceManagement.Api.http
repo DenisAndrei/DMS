@@ -69,7 +69,7 @@ Authorization: Bearer {{AccessToken}}
 {
   "name": "Pixel 10",
   "manufacturer": "Google",
-  "type": 0,
+  "type": "phone",
   "operatingSystem": "Android",
   "osVersion": "16",
   "processor": "Tensor G5",
@@ -88,14 +88,14 @@ Authorization: Bearer {{AccessToken}}
 {
   "name": "iPhone 15 Pro",
   "manufacturer": "Apple",
-  "type": 0,
+  "type": "phone",
   "operatingSystem": "iOS",
   "osVersion": "17.4",
   "processor": "A17 Pro",
   "ramAmountGb": 8,
   "description": "Updated sample payload for a protected device request.",
   "location": "Bucharest",
-  "assignedUserId": 1
+  "assignedUserId": null
 }
 
 ###

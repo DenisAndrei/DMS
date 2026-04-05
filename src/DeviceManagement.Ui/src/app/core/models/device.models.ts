@@ -1,7 +1,4 @@
-export enum DeviceType {
-  Phone = 0,
-  Tablet = 1
-}
+export type DeviceType = 'phone' | 'tablet';
 
 export interface UserSummary {
   id: number;
@@ -10,7 +7,7 @@ export interface UserSummary {
   location: string;
 }
 
-export interface DeviceResponse {
+export interface Device {
   id: number;
   name: string;
   manufacturer: string;
@@ -27,7 +24,7 @@ export interface DeviceResponse {
   updatedAtUtc: string;
 }
 
-export interface DeviceUpsertRequest {
+export interface UpsertDeviceRequest {
   name: string;
   manufacturer: string;
   type: DeviceType;
@@ -40,12 +37,12 @@ export interface DeviceUpsertRequest {
   assignedUserId: number | null;
 }
 
-export type CreateDeviceRequest = DeviceUpsertRequest;
-export type UpdateDeviceRequest = DeviceUpsertRequest;
+export type CreateDeviceRequest = UpsertDeviceRequest;
+export type UpdateDeviceRequest = UpsertDeviceRequest;
 
 export const DEVICE_TYPE_OPTIONS = [
-  { value: DeviceType.Phone, label: 'Phone' },
-  { value: DeviceType.Tablet, label: 'Tablet' }
+  { value: 'phone' as DeviceType, label: 'Phone' },
+  { value: 'tablet' as DeviceType, label: 'Tablet' }
 ] as const;
 
 export function getDeviceTypeLabel(type: DeviceType): string {

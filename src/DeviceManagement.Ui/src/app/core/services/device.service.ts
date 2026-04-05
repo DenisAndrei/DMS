@@ -2,9 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
-  CreateDeviceRequest,
-  DeviceResponse,
-  UpdateDeviceRequest
+  Device,
+  UpsertDeviceRequest
 } from '../models/device.models';
 
 @Injectable({
@@ -14,28 +13,32 @@ export class DeviceService {
   private readonly httpClient = inject(HttpClient);
   private readonly devicesEndpoint = '/api/devices';
 
-  getDevices(): Observable<DeviceResponse[]> {
-    return this.httpClient.get<DeviceResponse[]>(this.devicesEndpoint);
+  getDevices(): Observable<Device[]> {
+    return this.httpClient.get<Device[]>(this.devicesEndpoint);
   }
 
-  getDeviceById(deviceId: number): Observable<DeviceResponse> {
-    return this.httpClient.get<DeviceResponse>(`${this.devicesEndpoint}/${deviceId}`);
+  getDevice(deviceId: number): Observable<Device> {
+    return this.httpClient.get<Device>(`${this.devicesEndpoint}/${deviceId}`);
   }
 
-  createDevice(request: CreateDeviceRequest): Observable<DeviceResponse> {
-    return this.httpClient.post<DeviceResponse>(this.devicesEndpoint, request);
+  getDeviceById(deviceId: number): Observable<Device> {
+    return this.getDevice(deviceId);
   }
 
-  updateDevice(deviceId: number, request: UpdateDeviceRequest): Observable<DeviceResponse> {
-    return this.httpClient.put<DeviceResponse>(`${this.devicesEndpoint}/${deviceId}`, request);
+  createDevice(request: UpsertDeviceRequest): Observable<Device> {
+    return this.httpClient.post<Device>(this.devicesEndpoint, request);
   }
 
-  assignDeviceToSelf(deviceId: number): Observable<DeviceResponse> {
-    return this.httpClient.post<DeviceResponse>(`${this.devicesEndpoint}/${deviceId}/assign`, {});
+  updateDevice(deviceId: number, request: UpsertDeviceRequest): Observable<Device> {
+    return this.httpClient.put<Device>(`${this.devicesEndpoint}/${deviceId}`, request);
   }
 
-  unassignDeviceFromSelf(deviceId: number): Observable<DeviceResponse> {
-    return this.httpClient.post<DeviceResponse>(`${this.devicesEndpoint}/${deviceId}/unassign`, {});
+  assignDeviceToSelf(deviceId: number): Observable<Device> {
+    return this.httpClient.post<Device>(`${this.devicesEndpoint}/${deviceId}/assign`, {});
+  }
+
+  unassignDeviceFromSelf(deviceId: number): Observable<Device> {
+    return this.httpClient.post<Device>(`${this.devicesEndpoint}/${deviceId}/unassign`, {});
   }
 
   deleteDevice(deviceId: number): Observable<void> {

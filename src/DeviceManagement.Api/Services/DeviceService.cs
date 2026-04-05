@@ -80,7 +80,7 @@ public sealed class DeviceService : IDeviceService
             request.RamAmountGb,
             request.Description,
             request.Location,
-            request.AssignedUserId,
+            existingDevice.AssignedUserId,
             id,
             cancellationToken);
 
