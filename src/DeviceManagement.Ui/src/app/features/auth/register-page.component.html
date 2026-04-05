@@ -1,26 +1,21 @@
 <section class="auth-shell">
   <div class="auth-shell__panel">
-    <form class="auth-card" [formGroup]="loginForm" (ngSubmit)="submitLoginAsync()">
+    <form class="auth-card" [formGroup]="registerForm" (ngSubmit)="submitRegisterAsync()">
       <div>
-        <p class="eyebrow">Welcome back</p>
-        <h2>Log in</h2>
+        <p class="eyebrow">New account</p>
+        <h2>Register</h2>
       </div>
 
       <p class="auth-card__text">
-        Use the seeded demo account or any account you already registered in the app.
+        Use any valid email address and a password with at least 8 characters.
       </p>
-
-      <div class="auth-card__hint">
-        <p><strong>Email:</strong> alexandra.ionescu@darwin.local</p>
-        <p><strong>Password:</strong> Darwin123!</p>
-      </div>
 
       <p *ngIf="errorMessage" class="notice notice--error">{{ errorMessage }}</p>
       <p *ngIf="successMessage" class="notice notice--success">{{ successMessage }}</p>
 
       <label class="field">
         <span>Email</span>
-        <input type="email" formControlName="email" placeholder="alexandra.ionescu@darwin.local" />
+        <input type="email" formControlName="email" placeholder="you@darwin.local" />
         <small *ngIf="fieldError('email')" class="field__error">{{ fieldError('email') }}</small>
       </label>
 
@@ -31,12 +26,12 @@
       </label>
 
       <button type="submit" class="button button--primary" [disabled]="isSubmitting">
-        {{ isSubmitting ? 'Signing in...' : 'Log in' }}
+        {{ isSubmitting ? 'Creating account...' : 'Register' }}
       </button>
 
       <p class="auth-card__text">
-        Need an account?
-        <a routerLink="/register">Create one here</a>
+        Already registered?
+        <a routerLink="/login">Return to login</a>
       </p>
     </form>
   </div>

@@ -6,12 +6,14 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
 import { LoginPageComponent } from './features/auth/login-page.component';
+import { RegisterPageComponent } from './features/auth/register-page.component';
 import { InventoryPageComponent } from './features/inventory/inventory-page.component';
 
 @NgModule({
   declarations: [
     App,
     LoginPageComponent,
+    RegisterPageComponent,
     InventoryPageComponent
   ],
   imports: [
