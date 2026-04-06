@@ -4,17 +4,19 @@ Current progress:
 - idempotent SQL scripts for database creation and seed data
 - ASP.NET Core Web API built with .NET 10
 - JWT authentication with register and login endpoints
+- Ollama-based AI device description generation with `phi4-mini`
 - protected CRUD endpoints for users and devices
 - device self-assignment and unassignment endpoints for the authenticated user
 - service-layer validation and duplicate-device checks
 - integration smoke tests for the API
-- Angular UI for Phase 3 with:
+- Angular UI for Phase 4 with:
   - login page
   - register page
   - route guard and bearer-token interceptor
   - devices list and details panel
   - create, update, and delete flows
   - assign and unassign actions for the signed-in user
+  - generate-description action in the device form
 
 ## Tech Stack
 
@@ -22,6 +24,8 @@ Current progress:
 - ASP.NET Core Web API
 - SQL Server / LocalDB
 - Microsoft.Data.SqlClient
+- Ollama
+- `phi4-mini`
 - Angular 21
 - TypeScript
 - xUnit
@@ -39,6 +43,7 @@ Current progress:
 - .NET 10 SDK
 - SQL Server LocalDB or SQL Server Express
 - Node.js and npm
+- Ollama if you want to run the real AI integration locally
 - `sqlcmd` if you want to run the SQL scripts from the terminal
 
 ## Database Setup
@@ -84,7 +89,28 @@ The API is configured to run locally on:
 
 - `http://localhost:5145`
 
-2. Start the Angular UI in a second terminal:
+2. Optional: start Ollama with the model used by Phase 4:
+
+Install Ollama first on Windows:
+
+- download it from [Ollama for Windows](https://ollama.com/download/windows)
+- run the installer
+- or install it from PowerShell:
+
+```powershell
+irm https://ollama.com/install.ps1 | iex
+```
+
+- open a new terminal and verify with `ollama --version`
+
+```powershell
+ollama pull phi4-mini
+ollama run phi4-mini
+```
+
+If Ollama is not running, the API falls back to a deterministic local description template so the feature still works.
+
+3. Start the Angular UI in a second or third terminal:
 
 ```powershell
 cd .\src\DeviceManagement.Ui
@@ -107,12 +133,13 @@ The UI proxies `/api/*` requests to:
 
 - `http://localhost:5145`
 
-Phase 3 UI flow:
+Phase 4 UI flow:
 
 - open `http://localhost:4200`
 - you will land on `/login`
 - sign in with the seeded account above or register a new account
 - after login or register, the app redirects to `/`
+- in the create or edit form, use `Generate with AI` to fill the description field
 
 ## Run Locally In Visual Studio
 
@@ -128,11 +155,18 @@ Recommended debug targets:
 - `DeviceManagement.Api` -> `http`
 - `DeviceManagement.Ui` -> `npm start`
 
+Optional before starting Visual Studio:
+
+- install Ollama from [Ollama for Windows](https://ollama.com/download/windows)
+- run `ollama pull phi4-mini`
+- run `ollama run phi4-mini`
+
 After startup:
 
 - the UI opens on the auth flow first
 - sign in with the seeded demo account or register a new account
 - once authenticated, Visual Studio can use the same running API and Angular UI for the protected inventory dashboard
+- the description generator uses Ollama when available and falls back locally when it is not
 
 ## Quick Checks
 
@@ -141,6 +175,7 @@ API:
 - `GET http://localhost:5145/`
 - `POST http://localhost:5145/api/auth/login`
 - `POST http://localhost:5145/api/auth/register`
+- `POST http://localhost:5145/api/devices/generate-description`
 
 UI:
 
@@ -150,6 +185,7 @@ UI:
 - you should be able to create, update, and delete devices
 - you should be able to assign an available device to yourself
 - you should be able to unassign a device assigned to your account
+- you should be able to generate a device description from the create or edit form
 
 There is also a ready-to-use HTTP file here:
 
@@ -161,6 +197,14 @@ For the protected API requests in that file:
 2. copy the returned JWT token
 3. paste it into `@AccessToken`
 4. run the protected `users` and `devices` requests
+
+Phase 4 note:
+
+1. run the login request first
+2. paste the JWT into `@AccessToken`
+3. run the `POST /api/devices/generate-description` request
+4. if Ollama is running, the response should come from `phi4-mini`
+5. if Ollama is not running, the response should still succeed with `usedFallback: true`
 
 ## API Endpoints
 
@@ -182,6 +226,7 @@ For the protected API requests in that file:
 - `GET /api/devices`
 - `GET /api/devices/{id}`
 - `POST /api/devices`
+- `POST /api/devices/generate-description`
 - `PUT /api/devices/{id}`
 - `POST /api/devices/{id}/assign`
 - `POST /api/devices/{id}/unassign`
@@ -201,4 +246,4 @@ dotnet test .\tests\DeviceManagement.Api.IntegrationTests\DeviceManagement.Api.I
 
 ## Current Notes
 
-- this README now documents the Phase 3
+- this README now documents the Phase 4 setup
