@@ -13,10 +13,14 @@ namespace DeviceManagement.Api.Controllers;
 public sealed class DevicesController : ControllerBase
 {
     private readonly IDeviceService _deviceService;
+    private readonly IDeviceDescriptionGenerator _deviceDescriptionGenerator;
 
-    public DevicesController(IDeviceService deviceService)
+    public DevicesController(
+        IDeviceService deviceService,
+        IDeviceDescriptionGenerator deviceDescriptionGenerator)
     {
         _deviceService = deviceService;
+        _deviceDescriptionGenerator = deviceDescriptionGenerator;
     }
 
     [HttpGet]
@@ -93,6 +97,32 @@ public sealed class DevicesController : ControllerBase
         var userId = User.GetRequiredUserId();
         var device = await _deviceService.UnassignFromUserAsync(id, userId, cancellationToken);
         return Ok(device);
+    }
+
+    [HttpPost("generate-description")]
+    [ProducesResponseType(typeof(GenerateDeviceDescriptionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<GenerateDeviceDescriptionResponse>> GenerateDescriptionAsync(
+        [FromBody] GenerateDeviceDescriptionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _deviceDescriptionGenerator.GenerateAsync(
+            new(
+                request.Name.Trim(),
+                request.Manufacturer.Trim(),
+                request.Type,
+                request.OperatingSystem.Trim(),
+                request.OsVersion.Trim(),
+                request.Processor.Trim(),
+                request.RamAmountGb),
+            cancellationToken);
+
+        return Ok(new GenerateDeviceDescriptionResponse(
+            result.Description,
+            result.Provider,
+            result.Model,
+            result.UsedFallback));
     }
 
     [HttpDelete("{id:int}")]

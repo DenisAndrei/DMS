@@ -28,6 +28,7 @@ public sealed class RootEndpointTests : IClassFixture<ApiApplicationFactory>
         Assert.Contains("/api/auth/login", payload.Endpoints);
         Assert.Contains("/api/users", payload.Endpoints);
         Assert.Contains("/api/devices", payload.Endpoints);
+        Assert.Contains("/api/devices/generate-description", payload.Endpoints);
         Assert.Contains("/api/devices/{id}/assign", payload.Endpoints);
         Assert.Contains("/api/devices/{id}/unassign", payload.Endpoints);
     }

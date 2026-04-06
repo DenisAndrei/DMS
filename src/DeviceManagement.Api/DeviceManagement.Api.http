@@ -81,6 +81,22 @@ Authorization: Bearer {{AccessToken}}
 
 ###
 
+POST {{DeviceManagement.Api_HostAddress}}/api/devices/generate-description
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
+
+{
+  "name": "Pixel 10",
+  "manufacturer": "Google",
+  "type": "phone",
+  "operatingSystem": "Android",
+  "osVersion": "16",
+  "processor": "Tensor G5",
+  "ramAmountGb": 12
+}
+
+###
+
 PUT {{DeviceManagement.Api_HostAddress}}/api/devices/1
 Content-Type: application/json
 Authorization: Bearer {{AccessToken}}
