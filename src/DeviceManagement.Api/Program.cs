@@ -6,6 +6,7 @@ using DeviceManagement.Api.Middleware;
 using DeviceManagement.Api.Options;
 using DeviceManagement.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,6 +52,13 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IDeviceService, DeviceService>();
+builder.Services.AddHttpClient<IDeviceDescriptionGenerator, OllamaDeviceDescriptionGenerator>(
+    (serviceProvider, client) =>
+    {
+        var aiOptions = serviceProvider.GetRequiredService<IOptions<AiOptions>>().Value;
+        client.BaseAddress = new Uri(aiOptions.OllamaBaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(Math.Max(5, aiOptions.RequestTimeoutSeconds));
+    });
 
 var app = builder.Build();
 
