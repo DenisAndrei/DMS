@@ -24,6 +24,12 @@ public sealed class DeviceService : IDeviceService
         return devices.Select(MapDeviceResponse).ToArray();
     }
 
+    public async Task<IReadOnlyCollection<DeviceResponse>> SearchAsync(string query, CancellationToken cancellationToken)
+    {
+        var devices = await _deviceRepository.SearchAsync(query, cancellationToken);
+        return devices.Select(MapDeviceResponse).ToArray();
+    }
+
     public async Task<DeviceResponse> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         var device = await _deviceRepository.GetByIdAsync(id, cancellationToken);

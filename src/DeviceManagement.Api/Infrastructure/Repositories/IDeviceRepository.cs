@@ -6,6 +6,8 @@ public interface IDeviceRepository
 {
     Task<IReadOnlyCollection<Device>> GetAllAsync(CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<Device>> SearchAsync(string query, CancellationToken cancellationToken);
+
     Task<Device?> GetByIdAsync(int id, CancellationToken cancellationToken);
 
     Task<int> CreateAsync(DeviceUpsertModel device, CancellationToken cancellationToken);

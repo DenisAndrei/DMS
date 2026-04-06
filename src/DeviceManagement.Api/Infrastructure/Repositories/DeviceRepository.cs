@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using DeviceManagement.Api.Domain;
 using DeviceManagement.Api.Domain.Models;
 using DeviceManagement.Api.Infrastructure.Data;
@@ -7,6 +9,10 @@ namespace DeviceManagement.Api.Infrastructure.Repositories;
 
 public sealed class DeviceRepository : IDeviceRepository
 {
+    private static readonly Regex SearchTokenRegex = new(
+        @"[\p{L}\p{Nd}]+",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private readonly IDbConnectionFactory _dbConnectionFactory;
 
     public DeviceRepository(IDbConnectionFactory dbConnectionFactory)
@@ -45,6 +51,32 @@ public sealed class DeviceRepository : IDeviceRepository
 
         using var connection = await _dbConnectionFactory.CreateOpenConnectionAsync(cancellationToken);
         using var command = new SqlCommand(sql, connection);
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        var devices = new List<Device>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            devices.Add(MapDevice(reader));
+        }
+
+        return devices;
+    }
+
+    public async Task<IReadOnlyCollection<Device>> SearchAsync(string query, CancellationToken cancellationToken)
+    {
+        var tokens = TokenizeQuery(query);
+        if (tokens.Count == 0)
+        {
+            return await GetAllAsync(cancellationToken);
+        }
+
+        var normalizedPhrase = string.Join(' ', tokens);
+        var sql = BuildSearchSql(tokens.Count);
+
+        using var connection = await _dbConnectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(sql, connection);
+        AddSearchParameters(command, normalizedPhrase, tokens);
+
         using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
         var devices = new List<Device>();
@@ -246,6 +278,103 @@ public sealed class DeviceRepository : IDeviceRepository
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
         return Convert.ToInt32(result) > 0;
+    }
+
+    private static string BuildSearchSql(int tokenCount)
+    {
+        var scoreParts = new List<string>
+        {
+            "CASE WHEN LOWER(d.Name) = @SearchPhrase THEN 220 ELSE 0 END",
+            "CASE WHEN LOWER(d.Name) LIKE @SearchPhrasePrefix THEN 120 ELSE 0 END",
+            "CASE WHEN LOWER(d.Name) LIKE @SearchPhraseContains THEN 80 ELSE 0 END",
+            "CASE WHEN LOWER(d.Manufacturer) = @SearchPhrase THEN 160 ELSE 0 END",
+            "CASE WHEN LOWER(d.Manufacturer) LIKE @SearchPhrasePrefix THEN 90 ELSE 0 END",
+            "CASE WHEN LOWER(d.Manufacturer) LIKE @SearchPhraseContains THEN 60 ELSE 0 END",
+            "CASE WHEN LOWER(d.Processor) = @SearchPhrase THEN 140 ELSE 0 END",
+            "CASE WHEN LOWER(d.Processor) LIKE @SearchPhraseContains THEN 45 ELSE 0 END"
+        };
+
+        for (var index = 0; index < tokenCount; index++)
+        {
+            scoreParts.Add($"CASE WHEN LOWER(d.Name) LIKE @TokenContains{index} THEN 45 ELSE 0 END");
+            scoreParts.Add($"CASE WHEN LOWER(d.Name) LIKE @TokenPrefix{index} THEN 20 ELSE 0 END");
+            scoreParts.Add($"CASE WHEN LOWER(d.Manufacturer) LIKE @TokenContains{index} THEN 25 ELSE 0 END");
+            scoreParts.Add($"CASE WHEN LOWER(d.Processor) LIKE @TokenContains{index} THEN 20 ELSE 0 END");
+            scoreParts.Add($"CASE WHEN CAST(d.RamAmountGb AS NVARCHAR(10)) = @TokenExact{index} THEN 18 ELSE 0 END");
+            scoreParts.Add($"CASE WHEN CONCAT(CAST(d.RamAmountGb AS NVARCHAR(10)), 'gb') = @TokenExact{index} THEN 18 ELSE 0 END");
+        }
+
+        var scoreExpression = string.Join(
+            Environment.NewLine + "                  + ",
+            scoreParts);
+
+        return $$"""
+            SELECT
+                d.Id,
+                d.Name,
+                d.Manufacturer,
+                d.Type,
+                d.OperatingSystem,
+                d.OsVersion,
+                d.Processor,
+                d.RamAmountGb,
+                d.Description,
+                d.Location,
+                d.AssignedUserId,
+                d.CreatedAtUtc,
+                d.UpdatedAtUtc,
+                u.Id AS AssignedUserEntityId,
+                u.Name AS AssignedUserName,
+                u.Role AS AssignedUserRole,
+                u.Location AS AssignedUserLocation,
+                u.CreatedAtUtc AS AssignedUserCreatedAtUtc,
+                u.UpdatedAtUtc AS AssignedUserUpdatedAtUtc
+            FROM dbo.Devices AS d
+            LEFT JOIN dbo.Users AS u
+                ON u.Id = d.AssignedUserId
+            CROSS APPLY
+            (
+                SELECT
+                    {{scoreExpression}} AS SearchScore
+            ) AS score
+            WHERE score.SearchScore > 0
+            ORDER BY score.SearchScore DESC, d.Name, d.Manufacturer, d.Id;
+            """;
+    }
+
+    private static void AddSearchParameters(
+        SqlCommand command,
+        string normalizedPhrase,
+        IReadOnlyList<string> tokens)
+    {
+        command.Parameters.Add("@SearchPhrase", System.Data.SqlDbType.NVarChar, 250).Value = normalizedPhrase;
+        command.Parameters.Add("@SearchPhrasePrefix", System.Data.SqlDbType.NVarChar, 260).Value = normalizedPhrase + "%";
+        command.Parameters.Add("@SearchPhraseContains", System.Data.SqlDbType.NVarChar, 270).Value = "%" + normalizedPhrase + "%";
+
+        for (var index = 0; index < tokens.Count; index++)
+        {
+            var token = tokens[index];
+
+            command.Parameters.Add($"@TokenExact{index}", System.Data.SqlDbType.NVarChar, 50).Value = token;
+            command.Parameters.Add($"@TokenPrefix{index}", System.Data.SqlDbType.NVarChar, 60).Value = token + "%";
+            command.Parameters.Add($"@TokenContains{index}", System.Data.SqlDbType.NVarChar, 70).Value = "%" + token + "%";
+        }
+    }
+
+    private static IReadOnlyList<string> TokenizeQuery(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Array.Empty<string>();
+        }
+
+        return SearchTokenRegex
+            .Matches(query.ToLowerInvariant())
+            .Select(match => match.Value)
+            .Where(value => value.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .Take(8)
+            .ToArray();
     }
 
     private static void AddUpsertParameters(SqlCommand command, DeviceUpsertModel device)

@@ -7,6 +7,8 @@ public interface IDeviceService
 {
     Task<IReadOnlyCollection<DeviceResponse>> GetAllAsync(CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<DeviceResponse>> SearchAsync(string query, CancellationToken cancellationToken);
+
     Task<DeviceResponse> GetByIdAsync(int id, CancellationToken cancellationToken);
 
     Task<DeviceResponse> CreateAsync(CreateDeviceRequest request, CancellationToken cancellationToken);
