@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   Device,
+  GenerateDeviceDescriptionRequest,
+  GenerateDeviceDescriptionResponse,
   UpsertDeviceRequest
 } from '../models/device.models';
 
@@ -27,6 +29,15 @@ export class DeviceService {
 
   createDevice(request: UpsertDeviceRequest): Observable<Device> {
     return this.httpClient.post<Device>(this.devicesEndpoint, request);
+  }
+
+  generateDescription(
+    request: GenerateDeviceDescriptionRequest
+  ): Observable<GenerateDeviceDescriptionResponse> {
+    return this.httpClient.post<GenerateDeviceDescriptionResponse>(
+      `${this.devicesEndpoint}/generate-description`,
+      request
+    );
   }
 
   updateDevice(deviceId: number, request: UpsertDeviceRequest): Observable<Device> {

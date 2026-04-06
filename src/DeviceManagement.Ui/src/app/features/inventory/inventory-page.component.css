@@ -159,6 +159,13 @@
   gap: 0.45rem;
 }
 
+.field__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .search-field span,
 .field span {
   font-weight: 600;
@@ -314,6 +321,12 @@
 .button--secondary {
   background: rgba(15, 124, 130, 0.12);
   color: var(--color-accent-deep);
+}
+
+.button--assist {
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .button--ghost {

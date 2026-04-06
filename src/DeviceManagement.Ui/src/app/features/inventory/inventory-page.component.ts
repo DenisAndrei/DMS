@@ -9,7 +9,12 @@ import {
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { Device, DeviceType, UpsertDeviceRequest } from '../../core/models/device.models';
+import {
+  Device,
+  DeviceType,
+  GenerateDeviceDescriptionRequest,
+  UpsertDeviceRequest
+} from '../../core/models/device.models';
 import { ProblemDetails } from '../../core/models/problem-details.model';
 import { AuthSessionService } from '../../core/services/auth-session.service';
 import { DeviceService } from '../../core/services/device.service';
@@ -54,9 +59,12 @@ export class InventoryPageComponent implements OnInit {
   readonly isSelecting = signal(false);
   readonly isAssigning = signal(false);
   readonly isUnassigning = signal(false);
+  readonly isGeneratingDescription = signal(false);
   readonly deletingDeviceId = signal<number | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly statusMessage = signal<string | null>(null);
+  readonly descriptionAssistMessage = signal<string | null>(null);
+  readonly descriptionAssistError = signal<string | null>(null);
   readonly formSubmitted = signal(false);
 
   readonly filteredDevices = computed(() => {
@@ -157,6 +165,8 @@ export class InventoryPageComponent implements OnInit {
 
     this.errorMessage.set(null);
     this.statusMessage.set(null);
+    this.descriptionAssistMessage.set(null);
+    this.descriptionAssistError.set(null);
     this.isSelecting.set(true);
 
     try {
@@ -181,6 +191,8 @@ export class InventoryPageComponent implements OnInit {
     this.formSubmitted.set(false);
     this.errorMessage.set(null);
     this.statusMessage.set(null);
+    this.descriptionAssistMessage.set(null);
+    this.descriptionAssistError.set(null);
     this.resetForm();
   }
 
@@ -194,6 +206,8 @@ export class InventoryPageComponent implements OnInit {
     this.formSubmitted.set(false);
     this.errorMessage.set(null);
     this.statusMessage.set(null);
+    this.descriptionAssistMessage.set(null);
+    this.descriptionAssistError.set(null);
     this.populateForm(device);
   }
 
@@ -201,7 +215,42 @@ export class InventoryPageComponent implements OnInit {
     this.formMode.set('view');
     this.formSubmitted.set(false);
     this.errorMessage.set(null);
+    this.descriptionAssistMessage.set(null);
+    this.descriptionAssistError.set(null);
     this.populateForm(this.selectedDevice());
+  }
+
+  async generateDescriptionAsync(): Promise<void> {
+    this.descriptionAssistMessage.set(null);
+    this.descriptionAssistError.set(null);
+
+    const request = this.buildGenerateDescriptionRequest();
+    if (!request) {
+      this.descriptionAssistError.set(
+        'Add the device name, manufacturer, type, operating system, OS version, processor, and RAM before generating a description.'
+      );
+      return;
+    }
+
+    this.isGeneratingDescription.set(true);
+
+    try {
+      const response = await firstValueFrom(this.api.generateDescription(request));
+      this.controls.description.setValue(response.description);
+      this.controls.description.markAsDirty();
+      this.controls.description.markAsTouched();
+      this.descriptionAssistMessage.set(
+        response.usedFallback
+          ? 'Description generated with the local fallback because Ollama is unavailable.'
+          : `Description generated with ${response.model} via ${response.provider}.`
+      );
+    } catch (error) {
+      this.descriptionAssistError.set(
+        this.toProblemMessage(error, 'Unable to generate the device description.')
+      );
+    } finally {
+      this.isGeneratingDescription.set(false);
+    }
   }
 
   async saveDeviceAsync(): Promise<void> {
@@ -241,6 +290,8 @@ export class InventoryPageComponent implements OnInit {
       this.selectedDevice.set(savedDevice);
       this.formMode.set('view');
       this.formSubmitted.set(false);
+      this.descriptionAssistMessage.set(null);
+      this.descriptionAssistError.set(null);
       this.populateForm(savedDevice);
       this.statusMessage.set(
         currentMode === 'create'
@@ -378,6 +429,8 @@ export class InventoryPageComponent implements OnInit {
       this.errorMessage.set(this.toProblemMessage(error, 'Unable to load the device inventory.'));
       this.devices.set([]);
       this.selectedDevice.set(null);
+      this.descriptionAssistMessage.set(null);
+      this.descriptionAssistError.set(null);
       this.resetForm();
     } finally {
       this.isLoading.set(false);
@@ -390,6 +443,8 @@ export class InventoryPageComponent implements OnInit {
 
     if (devices.length === 0) {
       this.selectedDevice.set(null);
+      this.descriptionAssistMessage.set(null);
+      this.descriptionAssistError.set(null);
       this.resetForm();
       return;
     }
@@ -493,6 +548,43 @@ export class InventoryPageComponent implements OnInit {
       description: rawValue.description.trim(),
       location: rawValue.location.trim(),
       assignedUserId: null
+    };
+  }
+
+  private buildGenerateDescriptionRequest(): GenerateDeviceDescriptionRequest | null {
+    const rawValue = this.deviceForm.getRawValue();
+
+    const requiredTextValues = [
+      rawValue.name,
+      rawValue.manufacturer,
+      rawValue.operatingSystem,
+      rawValue.osVersion,
+      rawValue.processor
+    ];
+
+    if (requiredTextValues.some((value) => !value.trim())) {
+      this.controls.name.markAsTouched();
+      this.controls.manufacturer.markAsTouched();
+      this.controls.operatingSystem.markAsTouched();
+      this.controls.osVersion.markAsTouched();
+      this.controls.processor.markAsTouched();
+      return null;
+    }
+
+    const ramAmountGb = Number(rawValue.ramAmountGb);
+    if (!Number.isFinite(ramAmountGb) || ramAmountGb < 1 || ramAmountGb > 1024) {
+      this.controls.ramAmountGb.markAsTouched();
+      return null;
+    }
+
+    return {
+      name: rawValue.name.trim(),
+      manufacturer: rawValue.manufacturer.trim(),
+      type: rawValue.type,
+      operatingSystem: rawValue.operatingSystem.trim(),
+      osVersion: rawValue.osVersion.trim(),
+      processor: rawValue.processor.trim(),
+      ramAmountGb
     };
   }
 

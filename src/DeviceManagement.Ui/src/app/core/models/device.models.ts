@@ -40,6 +40,23 @@ export interface UpsertDeviceRequest {
 export type CreateDeviceRequest = UpsertDeviceRequest;
 export type UpdateDeviceRequest = UpsertDeviceRequest;
 
+export interface GenerateDeviceDescriptionRequest {
+  name: string;
+  manufacturer: string;
+  type: DeviceType;
+  operatingSystem: string;
+  osVersion: string;
+  processor: string;
+  ramAmountGb: number;
+}
+
+export interface GenerateDeviceDescriptionResponse {
+  description: string;
+  provider: string;
+  model: string;
+  usedFallback: boolean;
+}
+
 export const DEVICE_TYPE_OPTIONS = [
   { value: 'phone' as DeviceType, label: 'Phone' },
   { value: 'tablet' as DeviceType, label: 'Tablet' }

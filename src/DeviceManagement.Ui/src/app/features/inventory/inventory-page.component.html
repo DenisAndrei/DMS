@@ -238,12 +238,28 @@
             </label>
 
             <label class="field field--full">
-              <span>Description</span>
+              <div class="field__header">
+                <span>Description</span>
+                <button
+                  type="button"
+                  class="button button--secondary button--assist"
+                  [disabled]="isGeneratingDescription()"
+                  (click)="generateDescriptionAsync()"
+                >
+                  {{ isGeneratingDescription() ? 'Generating...' : 'Generate with AI' }}
+                </button>
+              </div>
               <textarea
                 rows="4"
                 formControlName="description"
                 placeholder="Describe the device and the main business use."
               ></textarea>
+              @if (descriptionAssistMessage()) {
+                <small class="field__hint">{{ descriptionAssistMessage() }}</small>
+              }
+              @if (descriptionAssistError()) {
+                <small class="field__error">{{ descriptionAssistError() }}</small>
+              }
               @if (fieldError('description'); as error) {
                 <small class="field__error">{{ error }}</small>
               }
