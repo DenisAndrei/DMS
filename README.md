@@ -5,15 +5,17 @@ Current progress:
 - ASP.NET Core Web API built with .NET 10
 - JWT authentication with register and login endpoints
 - Ollama-based AI device description generation with `phi4-mini`
+- ranked free-text device search across name, manufacturer, RAM, and processor
 - protected CRUD endpoints for users and devices
 - device self-assignment and unassignment endpoints for the authenticated user
 - service-layer validation and duplicate-device checks
-- integration smoke tests for the API
+- a small mix of API smoke tests and device service tests
 - Angular UI for Phase 4 with:
   - login page
   - register page
   - route guard and bearer-token interceptor
   - devices list and details panel
+  - ranked quick search wired to the API
   - create, update, and delete flows
   - assign and unassign actions for the signed-in user
   - generate-description action in the device form
@@ -175,6 +177,7 @@ API:
 - `GET http://localhost:5145/`
 - `POST http://localhost:5145/api/auth/login`
 - `POST http://localhost:5145/api/auth/register`
+- `GET http://localhost:5145/api/devices/search?q=atlas`
 - `POST http://localhost:5145/api/devices/generate-description`
 
 UI:
@@ -185,6 +188,7 @@ UI:
 - you should be able to create, update, and delete devices
 - you should be able to assign an available device to yourself
 - you should be able to unassign a device assigned to your account
+- you should be able to search the inventory by name, manufacturer, RAM, and processor
 - you should be able to generate a device description from the create or edit form
 
 There is also a ready-to-use HTTP file here:
@@ -206,6 +210,14 @@ Phase 4 note:
 4. if Ollama is running, the response should come from `phi4-mini`
 5. if Ollama is not running, the response should still succeed with `usedFallback: true`
 
+Bonus search note:
+
+1. sign in through the UI or paste a JWT into `@AccessToken`
+2. call `GET /api/devices/search?q=...` or use the inventory quick filter
+3. the search normalizes case, spacing, and punctuation
+4. matching considers `Name`, `Manufacturer`, `RAM`, and `Processor`
+5. stronger matches rank first, with `Name` weighted above the other searchable fields
+
 ## API Endpoints
 
 ### Auth
@@ -224,6 +236,7 @@ Phase 4 note:
 ### Devices
 
 - `GET /api/devices`
+- `GET /api/devices/search?q={query}`
 - `GET /api/devices/{id}`
 - `POST /api/devices`
 - `POST /api/devices/generate-description`
@@ -238,12 +251,34 @@ Protected endpoints:
 - all `devices` endpoints require a bearer token
 - only the two `auth` endpoints are public
 
+## Bonus Search
+
+The bonus feature is implemented in both the API and the Angular UI.
+
+What it does:
+
+- accepts a free-text query
+- normalizes case, repeated spaces, and punctuation
+- tokenizes the query before matching
+- searches these device fields:
+  - `Name`
+  - `Manufacturer`
+  - `RAM`
+  - `Processor`
+- returns ranked results with stronger `Name` matches first
+
+How to try it:
+
+- in the UI, type into the inventory quick filter after signing in
+- in the API, call `GET /api/devices/search?q=atlas`
+- try variants like `ATLAS`, `atlas!!!`, or `12 gb` to see normalization and token matching
+
 ## Run Tests
 
 ```powershell
-dotnet test .\tests\DeviceManagement.Api.IntegrationTests\DeviceManagement.Api.IntegrationTests.csproj
+dotnet test .\DeviceManagementSystem.sln
 ```
 
 ## Current Notes
 
-- this README now documents the Phase 4 setup
+- this README now documents the Phase 4 setup and the bonus search feature
