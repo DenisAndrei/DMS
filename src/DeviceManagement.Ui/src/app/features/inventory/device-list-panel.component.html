@@ -1,0 +1,61 @@
+@if (isLoading) {
+  <div class="empty-state">
+    <h3>Loading inventory</h3>
+    <p>The device list is being prepared.</p>
+  </div>
+} @else if (totalDeviceCount === 0) {
+  <div class="empty-state">
+    <h3>No devices yet</h3>
+    <p>Create the first device to start building the company inventory.</p>
+  </div>
+} @else if (devices.length === 0 && hasSearchQuery) {
+  <div class="empty-state">
+    <h3>No matches found</h3>
+    <p>Try a broader search term to see more ranked results.</p>
+  </div>
+} @else {
+  <ul class="device-list">
+    @for (device of devices; track device.id) {
+      <li class="device-row" [class.is-selected]="selectedDeviceId === device.id">
+        <button
+          type="button"
+          class="device-card"
+          [disabled]="deletingDeviceId === device.id"
+          (click)="selectRequested.emit(device.id)"
+        >
+          <div class="device-card__top">
+            <span class="pill">{{ device.type | titlecase }}</span>
+            <span
+              class="assignment-pill"
+              [class.assignment-pill--available]="device.assignedUser === null"
+              [class.assignment-pill--mine]="device.assignedUserId === currentUserId"
+            >
+              @if (device.assignedUserId === currentUserId) {
+                Assigned to you
+              } @else {
+                {{ device.assignedUser?.name ?? 'Available' }}
+              }
+            </span>
+          </div>
+
+          <strong class="device-card__title">{{ device.name }}</strong>
+          <p class="device-card__subtitle">
+            {{ device.manufacturer }} - {{ device.operatingSystem }} {{ device.osVersion }}
+          </p>
+          <p class="device-card__meta">
+            {{ device.location }} - {{ device.ramAmountGb }} GB RAM - {{ device.processor }}
+          </p>
+        </button>
+
+        <button
+          type="button"
+          class="button button--danger button--compact"
+          [disabled]="deletingDeviceId === device.id"
+          (click)="deleteRequested.emit(device)"
+        >
+          {{ deletingDeviceId === device.id ? 'Deleting...' : 'Delete' }}
+        </button>
+      </li>
+    }
+  </ul>
+}

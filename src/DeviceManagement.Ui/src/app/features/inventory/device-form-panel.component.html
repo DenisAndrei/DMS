@@ -1,0 +1,111 @@
+<form class="device-form" [formGroup]="formGroup" (ngSubmit)="saveRequested.emit()">
+  <div class="form-grid">
+    <label class="field">
+      <span>Name</span>
+      <input type="text" formControlName="name" placeholder="Galaxy S24 Enterprise" />
+      @if (fieldError('name'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Manufacturer</span>
+      <input type="text" formControlName="manufacturer" placeholder="Samsung" />
+      @if (fieldError('manufacturer'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Type</span>
+      <select formControlName="type">
+        @for (deviceType of deviceTypes; track deviceType.value) {
+          <option [value]="deviceType.value">{{ deviceType.label }}</option>
+        }
+      </select>
+      @if (fieldError('type'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Operating system</span>
+      <input type="text" formControlName="operatingSystem" placeholder="Android" />
+      @if (fieldError('operatingSystem'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>OS version</span>
+      <input type="text" formControlName="osVersion" placeholder="14" />
+      @if (fieldError('osVersion'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Processor</span>
+      <input type="text" formControlName="processor" placeholder="Snapdragon 8 Gen 3" />
+      @if (fieldError('processor'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>RAM (GB)</span>
+      <input type="number" min="1" max="1024" formControlName="ramAmountGb" />
+      @if (fieldError('ramAmountGb'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field field--full">
+      <span>Location</span>
+      <input type="text" formControlName="location" placeholder="Bucharest Office" />
+      @if (fieldError('location'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+
+    <label class="field field--full">
+      <div class="field__header">
+        <span>Description</span>
+        <button
+          type="button"
+          class="button button--secondary button--assist"
+          [disabled]="isGeneratingDescription"
+          (click)="generateDescriptionRequested.emit()"
+        >
+          {{ isGeneratingDescription ? 'Generating...' : 'Generate with AI' }}
+        </button>
+      </div>
+      <textarea
+        rows="4"
+        formControlName="description"
+        placeholder="Describe the device and the main business use."
+      ></textarea>
+      @if (descriptionAssistMessage) {
+        <small class="field__hint">{{ descriptionAssistMessage }}</small>
+      }
+      @if (descriptionAssistError) {
+        <small class="field__error">{{ descriptionAssistError }}</small>
+      }
+      @if (fieldError('description'); as error) {
+        <small class="field__error">{{ error }}</small>
+      }
+    </label>
+  </div>
+
+  <div class="form-footer">
+    <p class="form-footer__hint">
+      Duplicate validation checks the combination of name, manufacturer, type, operating system,
+      and OS version. Assignment is handled separately through the self-service actions after the
+      device is saved.
+    </p>
+
+    <button type="submit" class="button button--primary" [disabled]="isSaving">
+      {{ isSaving ? 'Saving...' : submitButtonLabel }}
+    </button>
+  </div>
+</form>

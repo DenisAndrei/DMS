@@ -93,7 +93,7 @@ public sealed class OllamaDeviceDescriptionGenerator : IDeviceDescriptionGenerat
     {
         var typeLabel = input.Type == DeviceType.Phone ? "smartphone" : "tablet";
         var builder = new StringBuilder();
-        builder.AppendLine("Write one concise, human-readable device description for a company inventory system.");
+        builder.AppendLine("Write one concise, human-readable device description.");
         builder.AppendLine("Keep it to one sentence, no bullet points, no markdown.");
         builder.AppendLine("Focus on business usefulness and the device profile.");
         builder.AppendLine();

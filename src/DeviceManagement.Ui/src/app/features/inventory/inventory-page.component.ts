@@ -1,53 +1,39 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  Validators
-} from '@angular/forms';
+import { Component, computed, inject, OnDestroy, OnInit, signal, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
   Device,
-  DeviceType,
-  GenerateDeviceDescriptionRequest,
-  UpsertDeviceRequest
+  DEVICE_TYPE_OPTIONS,
 } from '../../core/models/device.models';
 import { ProblemDetails } from '../../core/models/problem-details.model';
 import { AuthSessionService } from '../../core/services/auth-session.service';
 import { DeviceService } from '../../core/services/device.service';
+import {
+  buildDeviceRequest,
+  buildGenerateDeviceDescriptionRequest,
+  createDeviceForm,
+  DeviceFormGroup,
+  findDuplicateDevice,
+  normalizeInventoryText
+} from './inventory-page.utils';
 
 type FormMode = 'view' | 'create' | 'edit';
-
-type DeviceFormGroup = FormGroup<{
-  name: FormControl<string>;
-  manufacturer: FormControl<string>;
-  type: FormControl<DeviceType>;
-  operatingSystem: FormControl<string>;
-  osVersion: FormControl<string>;
-  processor: FormControl<string>;
-  ramAmountGb: FormControl<number | null>;
-  description: FormControl<string>;
-  location: FormControl<string>;
-}>;
 
 @Component({
   selector: 'app-inventory-page',
   templateUrl: './inventory-page.component.html',
   styleUrl: './inventory-page.component.css',
-  standalone: false
+  standalone: false,
+  encapsulation: ViewEncapsulation.None
 })
 export class InventoryPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(DeviceService);
   private readonly authSession = inject(AuthSessionService);
   private readonly router = inject(Router);
 
-  readonly deviceTypes = [
-    { value: 'phone' as DeviceType, label: 'Phone' },
-    { value: 'tablet' as DeviceType, label: 'Tablet' }
-  ];
+  readonly deviceTypes = DEVICE_TYPE_OPTIONS;
 
   readonly currentUser = this.authSession.currentUser;
   readonly devices = signal<Device[]>([]);
@@ -138,7 +124,7 @@ export class InventoryPageComponent implements OnInit, OnDestroy {
     return this.formMode() === 'view' && !!device && !!userId && device.assignedUserId === userId;
   });
 
-  readonly deviceForm: DeviceFormGroup = this.createForm();
+  readonly deviceForm: DeviceFormGroup = createDeviceForm();
   readonly controls = this.deviceForm.controls;
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private searchRequestVersion = 0;
@@ -219,7 +205,7 @@ export class InventoryPageComponent implements OnInit, OnDestroy {
     this.descriptionAssistMessage.set(null);
     this.descriptionAssistError.set(null);
 
-    const request = this.buildGenerateDescriptionRequest();
+    const request = buildGenerateDeviceDescriptionRequest(this.deviceForm);
     if (!request) {
       this.descriptionAssistError.set(
         'Add the device name, manufacturer, type, operating system, OS version, processor, and RAM before generating a description.'
@@ -259,9 +245,10 @@ export class InventoryPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const payload = this.buildRequest();
+    const payload = buildDeviceRequest(this.deviceForm);
     const selectedDeviceId = this.selectedDevice()?.id ?? null;
-    const duplicateDevice = this.findDuplicateDevice(
+    const duplicateDevice = findDuplicateDevice(
+      this.devices(),
       payload,
       currentMode === 'edit' ? selectedDeviceId : null
     );
@@ -409,27 +396,6 @@ export class InventoryPageComponent implements OnInit, OnDestroy {
     }, 250);
   }
 
-  fieldError(controlName: keyof DeviceFormGroup['controls']): string | null {
-    const control = this.controls[controlName];
-    if (!this.shouldShowError(control)) {
-      return null;
-    }
-
-    if (control.hasError('required')) {
-      return 'This field is required.';
-    }
-
-    if (control.hasError('maxlength')) {
-      return `Keep this value under ${control.getError('maxlength').requiredLength} characters.`;
-    }
-
-    if (control.hasError('min') || control.hasError('max')) {
-      return 'RAM must be between 1 GB and 1024 GB.';
-    }
-
-    return 'Please review this field.';
-  }
-
   private async loadInventoryAsync(): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -514,100 +480,6 @@ export class InventoryPageComponent implements OnInit, OnDestroy {
     this.deviceForm.markAsUntouched();
   }
 
-  private createForm(): DeviceFormGroup {
-    return new FormGroup({
-      name: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(120)]
-      }),
-      manufacturer: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(120)]
-      }),
-      type: new FormControl<DeviceType>('phone', {
-        nonNullable: true,
-        validators: [Validators.required]
-      }),
-      operatingSystem: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(120)]
-      }),
-      osVersion: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(50)]
-      }),
-      processor: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(120)]
-      }),
-      ramAmountGb: new FormControl<number | null>(8, {
-        validators: [Validators.required, Validators.min(1), Validators.max(1024)]
-      }),
-      description: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(1000)]
-      }),
-      location: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(120)]
-      })
-    });
-  }
-
-  private buildRequest(): UpsertDeviceRequest {
-    const rawValue = this.deviceForm.getRawValue();
-
-    return {
-      name: rawValue.name.trim(),
-      manufacturer: rawValue.manufacturer.trim(),
-      type: rawValue.type,
-      operatingSystem: rawValue.operatingSystem.trim(),
-      osVersion: rawValue.osVersion.trim(),
-      processor: rawValue.processor.trim(),
-      ramAmountGb: Number(rawValue.ramAmountGb),
-      description: rawValue.description.trim(),
-      location: rawValue.location.trim(),
-      assignedUserId: null
-    };
-  }
-
-  private buildGenerateDescriptionRequest(): GenerateDeviceDescriptionRequest | null {
-    const rawValue = this.deviceForm.getRawValue();
-
-    const requiredTextValues = [
-      rawValue.name,
-      rawValue.manufacturer,
-      rawValue.operatingSystem,
-      rawValue.osVersion,
-      rawValue.processor
-    ];
-
-    if (requiredTextValues.some((value) => !value.trim())) {
-      this.controls.name.markAsTouched();
-      this.controls.manufacturer.markAsTouched();
-      this.controls.operatingSystem.markAsTouched();
-      this.controls.osVersion.markAsTouched();
-      this.controls.processor.markAsTouched();
-      return null;
-    }
-
-    const ramAmountGb = Number(rawValue.ramAmountGb);
-    if (!Number.isFinite(ramAmountGb) || ramAmountGb < 1 || ramAmountGb > 1024) {
-      this.controls.ramAmountGb.markAsTouched();
-      return null;
-    }
-
-    return {
-      name: rawValue.name.trim(),
-      manufacturer: rawValue.manufacturer.trim(),
-      type: rawValue.type,
-      operatingSystem: rawValue.operatingSystem.trim(),
-      osVersion: rawValue.osVersion.trim(),
-      processor: rawValue.processor.trim(),
-      ramAmountGb
-    };
-  }
-
   private async searchDevicesAsync(query: string): Promise<void> {
     const normalizedQuery = this.normalizeText(query);
     if (!normalizedQuery) {
@@ -640,35 +512,8 @@ export class InventoryPageComponent implements OnInit, OnDestroy {
     }
   }
 
-  private findDuplicateDevice(
-    payload: UpsertDeviceRequest,
-    excludedDeviceId: number | null
-  ): Device | undefined {
-    const payloadKey = this.createDuplicateKey(payload);
-
-    return this.devices().find(
-      (device) => device.id !== excludedDeviceId && this.createDuplicateKey(device) === payloadKey
-    );
-  }
-
-  private createDuplicateKey(
-    device: Pick<Device, 'name' | 'manufacturer' | 'type' | 'operatingSystem' | 'osVersion'>
-  ): string {
-    return [
-      this.normalizeText(device.name),
-      this.normalizeText(device.manufacturer),
-      this.normalizeText(device.type),
-      this.normalizeText(device.operatingSystem),
-      this.normalizeText(device.osVersion)
-    ].join('|');
-  }
-
   private normalizeText(value: string): string {
-    return value.trim().replace(/\s+/g, ' ').toLowerCase();
-  }
-
-  private shouldShowError(control: AbstractControl | null): boolean {
-    return !!control && control.invalid && (control.touched || this.formSubmitted());
+    return normalizeInventoryText(value);
   }
 
   private toProblemMessage(error: unknown, fallbackMessage: string): string {

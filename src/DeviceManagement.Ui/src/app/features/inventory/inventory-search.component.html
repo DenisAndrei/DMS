@@ -1,0 +1,17 @@
+<label class="search-field">
+  <span>Quick filter</span>
+  <input
+    type="search"
+    placeholder="Search by name, manufacturer, RAM, or processor"
+    [value]="query"
+    (input)="queryChanged.emit(($any($event.target).value ?? '').toString())"
+  />
+
+  @if (isSearching) {
+    <small class="field__hint">Searching ranked results...</small>
+  }
+
+  @if (errorMessage) {
+    <small class="field__error">{{ errorMessage }}</small>
+  }
+</label>

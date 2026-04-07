@@ -1,0 +1,98 @@
+@if (device; as device) {
+  <article class="device-details">
+    <div class="device-details__banner">
+      <div>
+        <p class="device-details__label">{{ device.type | titlecase }}</p>
+        <h3>{{ device.name }}</h3>
+        <p class="device-details__summary">
+          {{ device.manufacturer }} - {{ device.operatingSystem }} {{ device.osVersion }}
+        </p>
+      </div>
+
+      <span
+        class="assignment-pill assignment-pill--detail"
+        [class.assignment-pill--available]="device.assignedUser === null"
+        [class.assignment-pill--mine]="device.assignedUserId === currentUser?.userId"
+      >
+        @if (device.assignedUserId === currentUser?.userId) {
+          Assigned to you
+        } @else {
+          {{ device.assignedUser?.name ?? 'Available' }}
+        }
+      </span>
+    </div>
+
+    <div class="device-details__actions">
+      @if (canAssign) {
+        <button
+          type="button"
+          class="button button--primary"
+          [disabled]="isAssigning"
+          (click)="assignRequested.emit()"
+        >
+          {{ isAssigning ? 'Assigning...' : 'Assign to me' }}
+        </button>
+      }
+
+      @if (canUnassign) {
+        <button
+          type="button"
+          class="button button--secondary"
+          [disabled]="isUnassigning"
+          (click)="unassignRequested.emit()"
+        >
+          {{ isUnassigning ? 'Unassigning...' : 'Unassign from me' }}
+        </button>
+      }
+
+      @if (!canAssign && !canUnassign) {
+        <p class="device-details__action-hint">
+          This device can be assigned by the signed-in user when it becomes available.
+        </p>
+      }
+    </div>
+
+    <p class="device-details__description">{{ device.description }}</p>
+
+    <dl class="spec-grid">
+      <div class="spec-grid__item">
+        <dt>Processor</dt>
+        <dd>{{ device.processor }}</dd>
+      </div>
+      <div class="spec-grid__item">
+        <dt>RAM</dt>
+        <dd>{{ device.ramAmountGb }} GB</dd>
+      </div>
+      <div class="spec-grid__item">
+        <dt>Location</dt>
+        <dd>{{ device.location }}</dd>
+      </div>
+      <div class="spec-grid__item">
+        <dt>Current user</dt>
+        <dd>
+          @if (device.assignedUserId === currentUser?.userId) {
+            You - {{ currentUser?.role }} - {{ currentUser?.location }}
+          } @else if (device.assignedUser) {
+            {{ device.assignedUser.name }} - {{ device.assignedUser.role }} -
+            {{ device.assignedUser.location }}
+          } @else {
+            Available for assignment
+          }
+        </dd>
+      </div>
+      <div class="spec-grid__item">
+        <dt>Created</dt>
+        <dd>{{ device.createdAtUtc | date: 'medium' }}</dd>
+      </div>
+      <div class="spec-grid__item">
+        <dt>Last updated</dt>
+        <dd>{{ device.updatedAtUtc | date: 'medium' }}</dd>
+      </div>
+    </dl>
+  </article>
+} @else {
+  <div class="empty-state">
+    <h3>Select a device</h3>
+    <p>Pick an item from the list to inspect its details or create a new one.</p>
+  </div>
+}
