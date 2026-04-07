@@ -32,6 +32,17 @@ public sealed class DevicesController : ControllerBase
         return Ok(devices);
     }
 
+    [HttpGet("search")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<DeviceResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IReadOnlyCollection<DeviceResponse>>> SearchAsync(
+        [FromQuery] string q,
+        CancellationToken cancellationToken)
+    {
+        var devices = await _deviceService.SearchAsync(q, cancellationToken);
+        return Ok(devices);
+    }
+
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(DeviceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -56,6 +56,12 @@ Authorization: Bearer {{AccessToken}}
 
 ###
 
+GET {{DeviceManagement.Api_HostAddress}}/api/devices/search?q=apple%20iphone%208gb
+Accept: application/json
+Authorization: Bearer {{AccessToken}}
+
+###
+
 GET {{DeviceManagement.Api_HostAddress}}/api/devices/1
 Accept: application/json
 Authorization: Bearer {{AccessToken}}

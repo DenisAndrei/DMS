@@ -76,6 +76,7 @@ app.MapGet("/", () => Results.Ok(new
         "/api/auth/login",
         "/api/users",
         "/api/devices",
+        "/api/devices/search?q={query}",
         "/api/devices/generate-description",
         "/api/devices/{id}/assign",
         "/api/devices/{id}/unassign"
