@@ -3,11 +3,11 @@ using System.Net.Http.Json;
 
 namespace DeviceManagement.Api.IntegrationTests;
 
-public sealed class DevicesValidationTests : IClassFixture<ApiApplicationFactory>
+public sealed class DeviceSecurityTests : IClassFixture<ApiApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public DevicesValidationTests(ApiApplicationFactory factory)
+    public DeviceSecurityTests(ApiApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
@@ -19,15 +19,15 @@ public sealed class DevicesValidationTests : IClassFixture<ApiApplicationFactory
             "/api/devices",
             new
             {
-                name = "",
-                manufacturer = "",
+                name = "Atlas Phone",
+                manufacturer = "Darwin",
                 type = 0,
-                operatingSystem = "",
-                osVersion = "",
-                processor = "",
-                ramAmountGb = 0,
-                description = "",
-                location = "",
+                operatingSystem = "Android",
+                osVersion = "15",
+                processor = "Tensor G5",
+                ramAmountGb = 12,
+                description = "Managed company handset.",
+                location = "Bucharest Office",
                 assignedUserId = (int?)null
             });
 

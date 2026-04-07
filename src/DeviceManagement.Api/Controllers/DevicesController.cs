@@ -63,11 +63,7 @@ public sealed class DevicesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var createdDevice = await _deviceService.CreateAsync(request, cancellationToken);
-
-        return CreatedAtAction(
-            nameof(GetByIdAsync),
-            new { id = createdDevice.Id },
-            createdDevice);
+        return Created($"/api/devices/{createdDevice.Id}", createdDevice);
     }
 
     [HttpPut("{id:int}")]

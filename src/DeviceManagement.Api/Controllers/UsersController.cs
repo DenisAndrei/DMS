@@ -46,11 +46,7 @@ public sealed class UsersController : ControllerBase
         CancellationToken cancellationToken)
     {
         var createdUser = await _userService.CreateAsync(request, cancellationToken);
-
-        return CreatedAtAction(
-            nameof(GetByIdAsync),
-            new { id = createdUser.Id },
-            createdUser);
+        return Created($"/api/users/{createdUser.Id}", createdUser);
     }
 
     [HttpPut("{id:int}")]
