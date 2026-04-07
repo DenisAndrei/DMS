@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -39,7 +39,7 @@ type DeviceFormGroup = FormGroup<{
   styleUrl: './inventory-page.component.css',
   standalone: false
 })
-export class InventoryPageComponent implements OnInit {
+export class InventoryPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(DeviceService);
   private readonly authSession = inject(AuthSessionService);
   private readonly router = inject(Router);
@@ -51,10 +51,12 @@ export class InventoryPageComponent implements OnInit {
 
   readonly currentUser = this.authSession.currentUser;
   readonly devices = signal<Device[]>([]);
+  readonly searchResults = signal<Device[] | null>(null);
   readonly selectedDevice = signal<Device | null>(null);
   readonly formMode = signal<FormMode>('view');
   readonly listFilter = signal('');
   readonly isLoading = signal(true);
+  readonly isSearching = signal(false);
   readonly isSaving = signal(false);
   readonly isSelecting = signal(false);
   readonly isAssigning = signal(false);
@@ -62,31 +64,16 @@ export class InventoryPageComponent implements OnInit {
   readonly isGeneratingDescription = signal(false);
   readonly deletingDeviceId = signal<number | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly searchErrorMessage = signal<string | null>(null);
   readonly statusMessage = signal<string | null>(null);
   readonly descriptionAssistMessage = signal<string | null>(null);
   readonly descriptionAssistError = signal<string | null>(null);
   readonly formSubmitted = signal(false);
 
-  readonly filteredDevices = computed(() => {
-    const query = this.normalizeText(this.listFilter());
-    if (!query) {
-      return this.devices();
-    }
-
-    return this.devices().filter((device) => {
-      const searchableText = [
-        device.name,
-        device.manufacturer,
-        device.operatingSystem,
-        device.location,
-        device.assignedUser?.name ?? ''
-      ]
-        .map((value) => this.normalizeText(value))
-        .join(' ');
-
-      return searchableText.includes(query);
-    });
-  });
+  readonly hasSearchQuery = computed(() => this.normalizeText(this.listFilter()).length > 0);
+  readonly displayedDevices = computed(() =>
+    this.hasSearchQuery() ? (this.searchResults() ?? []) : this.devices()
+  );
 
   readonly totalDevices = computed(() => this.devices().length);
   readonly assignedDevices = computed(
@@ -153,9 +140,17 @@ export class InventoryPageComponent implements OnInit {
 
   readonly deviceForm: DeviceFormGroup = this.createForm();
   readonly controls = this.deviceForm.controls;
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private searchRequestVersion = 0;
 
   async ngOnInit(): Promise<void> {
     await this.loadInventoryAsync();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer !== null) {
+      clearTimeout(this.searchDebounceTimer);
+    }
   }
 
   async selectDevice(id: number): Promise<void> {
@@ -393,6 +388,25 @@ export class InventoryPageComponent implements OnInit {
 
   updateFilter(value: string): void {
     this.listFilter.set(value);
+    this.searchErrorMessage.set(null);
+
+    if (this.searchDebounceTimer !== null) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+
+    if (!this.normalizeText(value)) {
+      this.searchRequestVersion++;
+      this.isSearching.set(false);
+      this.searchResults.set(null);
+      return;
+    }
+
+    this.isSearching.set(true);
+    this.searchDebounceTimer = window.setTimeout(() => {
+      this.searchDebounceTimer = null;
+      void this.searchDevicesAsync(value);
+    }, 250);
   }
 
   fieldError(controlName: keyof DeviceFormGroup['controls']): string | null {
@@ -429,6 +443,8 @@ export class InventoryPageComponent implements OnInit {
       this.errorMessage.set(this.toProblemMessage(error, 'Unable to load the device inventory.'));
       this.devices.set([]);
       this.selectedDevice.set(null);
+      this.searchResults.set(null);
+      this.searchErrorMessage.set(null);
       this.descriptionAssistMessage.set(null);
       this.descriptionAssistError.set(null);
       this.resetForm();
@@ -454,6 +470,10 @@ export class InventoryPageComponent implements OnInit {
 
     this.selectedDevice.set(nextSelectedDevice);
     this.populateForm(nextSelectedDevice);
+
+    if (this.hasSearchQuery()) {
+      await this.searchDevicesAsync(this.listFilter());
+    }
   }
 
   private populateForm(device: Device | null | undefined): void {
@@ -586,6 +606,38 @@ export class InventoryPageComponent implements OnInit {
       processor: rawValue.processor.trim(),
       ramAmountGb
     };
+  }
+
+  private async searchDevicesAsync(query: string): Promise<void> {
+    const normalizedQuery = this.normalizeText(query);
+    if (!normalizedQuery) {
+      this.isSearching.set(false);
+      this.searchResults.set(null);
+      return;
+    }
+
+    const requestVersion = ++this.searchRequestVersion;
+
+    try {
+      const devices = await firstValueFrom(this.api.searchDevices(query));
+      if (requestVersion !== this.searchRequestVersion) {
+        return;
+      }
+
+      this.searchResults.set(devices);
+      this.searchErrorMessage.set(null);
+    } catch (error) {
+      if (requestVersion !== this.searchRequestVersion) {
+        return;
+      }
+
+      this.searchResults.set([]);
+      this.searchErrorMessage.set(this.toProblemMessage(error, 'Unable to search devices right now.'));
+    } finally {
+      if (requestVersion === this.searchRequestVersion) {
+        this.isSearching.set(false);
+      }
+    }
   }
 
   private findDuplicateDevice(

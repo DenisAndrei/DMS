@@ -62,10 +62,16 @@
         <span>Quick filter</span>
         <input
           type="search"
-          placeholder="Search by name, manufacturer, OS, or location"
+          placeholder="Search by name, manufacturer, RAM, or processor"
           [value]="listFilter()"
           (input)="updateFilter(($any($event.target).value ?? '').toString())"
         />
+        @if (isSearching()) {
+          <small class="field__hint">Searching ranked results...</small>
+        }
+        @if (searchErrorMessage()) {
+          <small class="field__error">{{ searchErrorMessage() }}</small>
+        }
       </label>
 
       @if (isLoading()) {
@@ -78,14 +84,14 @@
           <h3>No devices yet</h3>
           <p>Create the first device to start building the company inventory.</p>
         </div>
-      } @else if (filteredDevices().length === 0) {
+      } @else if (displayedDevices().length === 0) {
         <div class="empty-state">
           <h3>No matches found</h3>
-          <p>Try a broader search term to see more devices.</p>
+          <p>Try a broader search term to see more ranked results.</p>
         </div>
       } @else {
         <ul class="device-list">
-          @for (device of filteredDevices(); track device.id) {
+          @for (device of displayedDevices(); track device.id) {
             <li class="device-row" [class.is-selected]="selectedDevice()?.id === device.id">
               <button
                 type="button"

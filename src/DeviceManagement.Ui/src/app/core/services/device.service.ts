@@ -19,6 +19,12 @@ export class DeviceService {
     return this.httpClient.get<Device[]>(this.devicesEndpoint);
   }
 
+  searchDevices(query: string): Observable<Device[]> {
+    return this.httpClient.get<Device[]>(`${this.devicesEndpoint}/search`, {
+      params: { q: query }
+    });
+  }
+
   getDevice(deviceId: number): Observable<Device> {
     return this.httpClient.get<Device>(`${this.devicesEndpoint}/${deviceId}`);
   }
