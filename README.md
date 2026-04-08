@@ -282,3 +282,4 @@ dotnet test .\DeviceManagementSystem.sln
 ## Current Notes
 
 - this README now documents the Phase 4 setup and the bonus search feature
+- Role-based admin permissions were not added because they were not required by the assignment. In a production version, create, update, and delete operations would typically be restricted to admin or inventory-manager roles.
